@@ -1641,7 +1641,7 @@ function renderCards() {
 function renderByClient() {
   const missions = getFilteredMissions();
   const grid = document.getElementById('missions-grid');
-  grid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+  grid.style.gridTemplateColumns = 'repeat(4, 1fr)';
 
   if (!missions.length) {
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
@@ -1670,12 +1670,17 @@ function renderByClient() {
     const client = DB.clients.find(x => x.id === cid);
     const clientMissions = byClient[cid];
 
-    // Construire la liste unique des collabs avec leur date de début (première mission trouvée)
+    // Construire la liste unique des collabs avec dates de début/fin et statut
     const collabMap = {};
     clientMissions.forEach(m => {
+      const terminee = getStatut(m) === 'terminee';
       (m.collabIds || []).forEach(id => {
-        if (!collabMap[id] || (m.debut && (!collabMap[id].debut || m.debut < collabMap[id].debut))) {
-          collabMap[id] = { debut: m.debut };
+        if (!collabMap[id]) {
+          collabMap[id] = { debut: m.debut, fin: m.fin, toutTerminee: terminee };
+        } else {
+          if (m.debut && (!collabMap[id].debut || m.debut < collabMap[id].debut)) collabMap[id].debut = m.debut;
+          if (m.fin  && (!collabMap[id].fin  || m.fin  > collabMap[id].fin))  collabMap[id].fin  = m.fin;
+          if (!terminee) collabMap[id].toutTerminee = false;
         }
       });
     });
@@ -1683,7 +1688,12 @@ function renderByClient() {
     const collabItems = Object.entries(collabMap).map(([id, info]) => {
       const c = DB.collaborateurs.find(x => x.id === id);
       if (!c) return null;
-      const dateStr = info.debut ? `<span class="collab-date">${formatDateCourt(info.debut)}</span>` : '';
+      let dateStr = '';
+      if (info.toutTerminee && info.debut && info.fin) {
+        dateStr = `<span class="collab-date">${formatDateCourt(info.debut)} - ${formatDateCourt(info.fin)}</span>`;
+      } else if (info.debut) {
+        dateStr = `<span class="collab-date">${formatDateCourt(info.debut)}</span>`;
+      }
       return `<li>${c.prenom} ${c.nom} ${dateStr}</li>`;
     }).filter(Boolean).sort().join('');
 
