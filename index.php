@@ -1996,7 +1996,7 @@ function formatDate(d) {
 function formatDateCourt(d) {
   if (!d) return '';
   const [y, m, day] = d.split('-');
-  return `${day}/${m}`;
+  return `${day}/${m}/${y.slice(2)}`;
 }
 
 // ══════════════════════════════════════════
