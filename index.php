@@ -370,6 +370,115 @@
     }
     .data-table .logo-mini img { width: 100%; height: 100%; object-fit: contain; }
 
+    /* ── TOGGLE VUE ── */
+    .view-toggle {
+      display: flex;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+    }
+    .view-btn {
+      padding: 0.45rem 1.2rem;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .view-btn.active {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    /* ── RADIO STATUT ── */
+    .radio-group {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      cursor: pointer;
+    }
+    .radio-option input[type=radio] { display: none; }
+    .radio-option span {
+      display: inline-block;
+      padding: 0.45rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s;
+      white-space: nowrap;
+    }
+    .radio-option input[type=radio]:checked + span {
+      background: rgba(93,216,184,0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .radio-option:hover span { color: var(--text); }
+
+    /* ── CARTE CLIENT (vue groupée) ── */
+    .client-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.4rem;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .client-card:hover { transform: translateY(-3px); border-color: rgba(93,216,184,0.3); }
+    .client-card-logo-box {
+      background: #fff;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 72px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      padding: 8px;
+    }
+    .client-card-logo-box img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .client-card-logo-initiales {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--bg);
+      letter-spacing: 0.05em;
+    }
+    .client-collab-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .client-collab-list li {
+      font-size: 0.87rem;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .client-collab-list li .collab-date {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+    }
+
     /* ── IMPORT EXCEL ── */
     .import-zone {
       border: 2px dashed var(--border);
@@ -477,22 +586,38 @@
     <!-- rempli par JS -->
   </div>
 
-  <div class="filters">
+  <div class="filters" style="align-items:flex-start">
     <div class="filter-group">
-      <label>Statut</label>
-      <select id="f-statut" onchange="renderCards()">
-        <option value="">Tous</option>
-        <option value="en_cours">En cours</option>
-        <option value="terminee">Terminée</option>
-      </select>
+      <label>Afficher</label>
+      <div class="view-toggle">
+        <button class="view-btn active" id="view-btn-client" onclick="setView('client')">Par client</button>
+        <button class="view-btn" id="view-btn-collab" onclick="setView('collab')">Par collaborateur</button>
+      </div>
     </div>
     <div class="filter-group">
+      <label>Statut</label>
+      <div class="radio-group">
+        <label class="radio-option">
+          <input type="radio" name="f-statut" value="en_cours" checked onchange="renderCards()">
+          <span>En cours</span>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="f-statut" value="terminee" onchange="renderCards()">
+          <span>Terminées</span>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="f-statut" value="" onchange="renderCards()">
+          <span>Toutes</span>
+        </label>
+      </div>
+    </div>
+    <div class="filter-group" id="f-client-group">
       <label>Client</label>
       <select id="f-client" onchange="renderCards()">
         <option value="">Tous</option>
       </select>
     </div>
-    <div class="filter-group">
+    <div class="filter-group" id="f-collab-group">
       <label>Collaborateur</label>
       <select id="f-collab" onchange="renderCards()">
         <option value="">Tous</option>
@@ -1475,51 +1600,169 @@ function renderMissions() {
 }
 
 // ══════════════════════════════════════════
-//  VISUALISATION — CARTES
+//  VISUALISATION — VUE & CARTES
 // ══════════════════════════════════════════
-function renderCards() {
-  const fStatut = document.getElementById('f-statut').value;
+let currentView = 'client';
+
+function setView(view) {
+  currentView = view;
+  document.getElementById('view-btn-client').classList.toggle('active', view === 'client');
+  document.getElementById('view-btn-collab').classList.toggle('active', view === 'collab');
+  // Masquer le filtre client en vue "par client" (inutile de filtrer par client si on est groupé par client)
+  document.getElementById('f-client-group').style.display = view === 'client' ? 'none' : '';
+  document.getElementById('f-collab-group').style.display = view === 'collab' ? 'none' : '';
+  renderCards();
+}
+
+function getFilteredMissions() {
+  const fStatutEl = document.querySelector('input[name="f-statut"]:checked');
+  const fStatut = fStatutEl ? fStatutEl.value : 'en_cours';
   const fClient = document.getElementById('f-client').value;
   const fCollab = document.getElementById('f-collab').value;
   const fSearch = document.getElementById('f-search').value.toLowerCase();
 
-  let missions = DB.missions.filter(m => {
+  return DB.missions.filter(m => {
     if (fStatut && getStatut(m) !== fStatut) return false;
     if (fClient && m.clientId !== fClient) return false;
     if (fCollab && !(m.collabIds || []).includes(fCollab)) return false;
-    if (fSearch && !m.titre.toLowerCase().includes(fSearch)) return false;
+    if (fSearch && !(m.titre || '').toLowerCase().includes(fSearch)) return false;
     return true;
   });
+}
 
+function renderCards() {
+  if (currentView === 'client') renderByClient();
+  else renderByCollab();
+}
+
+function renderByClient() {
+  const missions = getFilteredMissions();
   const grid = document.getElementById('missions-grid');
+  grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(220px, 1fr))';
 
   if (!missions.length) {
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
       <div class="icon">🔍</div>
-      <p>Aucune mission trouvée.<br>Ajoutez des missions dans l'onglet Paramétrage.</p>
+      <p>Aucune mission trouvée.</p>
     </div>`;
     return;
   }
 
-  grid.innerHTML = missions.map(m => {
-    const client = DB.clients.find(c => c.id === m.clientId);
-    const collabs = (m.collabIds || []).map(id => {
+  // Regrouper par client
+  const byClient = {};
+  missions.forEach(m => {
+    const cid = m.clientId || '__sans__';
+    if (!byClient[cid]) byClient[cid] = [];
+    byClient[cid].push(m);
+  });
+
+  // Trier les clients par nom
+  const clientIds = Object.keys(byClient).sort((a, b) => {
+    const ca = DB.clients.find(x => x.id === a);
+    const cb = DB.clients.find(x => x.id === b);
+    return (ca ? ca.nom : '').localeCompare(cb ? cb.nom : '', 'fr');
+  });
+
+  grid.innerHTML = clientIds.map(cid => {
+    const client = DB.clients.find(x => x.id === cid);
+    const clientMissions = byClient[cid];
+
+    // Construire la liste unique des collabs avec leur date de début (première mission trouvée)
+    const collabMap = {};
+    clientMissions.forEach(m => {
+      (m.collabIds || []).forEach(id => {
+        if (!collabMap[id] || (m.debut && (!collabMap[id].debut || m.debut < collabMap[id].debut))) {
+          collabMap[id] = { debut: m.debut };
+        }
+      });
+    });
+
+    const collabItems = Object.entries(collabMap).map(([id, info]) => {
       const c = DB.collaborateurs.find(x => x.id === id);
-      return c ? `${c.prenom} ${c.nom}` : '';
-    }).filter(Boolean).join(', ');
-    const statut2  = getStatut(m);
-    const badgeCls = statut2 === 'en_cours' ? 'badge-encours' : 'badge-terminee';
-    const badgeLbl = statut2 === 'en_cours' ? '🔄 En cours' : '✅ Terminée';
-    const periode  = [m.debut, m.fin].filter(Boolean).map(d => formatDate(d)).join(' → ');
+      if (!c) return null;
+      const dateStr = info.debut ? `<span class="collab-date">${formatDate(info.debut)}</span>` : '';
+      return `<li>${c.prenom} ${c.nom} ${dateStr}</li>`;
+    }).filter(Boolean).sort().join('');
+
+    // Logo
+    let logoContent;
+    if (client && client.logo && isUrl(client.logo)) {
+      logoContent = `<img src="${client.logo}" onerror="this.parentElement.innerHTML='<span class=\\'client-card-logo-initiales\\'>${(client.nom||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</span>'">`;
+    } else if (client) {
+      const initiales = (client.nom || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+      logoContent = `<span class="client-card-logo-initiales" style="color:var(--bg)">${initiales}</span>`;
+    } else {
+      logoContent = `<span class="client-card-logo-initiales" style="color:var(--bg)">?</span>`;
+    }
+
+    return `
+    <div class="client-card">
+      <div class="client-card-logo-box">${logoContent}</div>
+      <ul class="client-collab-list">${collabItems}</ul>
+    </div>`;
+  }).join('');
+}
+
+function renderByCollab() {
+  const missions = getFilteredMissions();
+  const grid = document.getElementById('missions-grid');
+  grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(260px, 1fr))';
+
+  if (!missions.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="icon">🔍</div>
+      <p>Aucune mission trouvée.</p>
+    </div>`;
+    return;
+  }
+
+  // Regrouper par collaborateur
+  const byCollab = {};
+  missions.forEach(m => {
+    (m.collabIds || []).forEach(id => {
+      if (!byCollab[id]) byCollab[id] = [];
+      byCollab[id].push(m);
+    });
+  });
+
+  const collabIds = Object.keys(byCollab).sort((a, b) => {
+    const ca = DB.collaborateurs.find(x => x.id === a);
+    const cb = DB.collaborateurs.find(x => x.id === b);
+    return (ca ? ca.prenom + ' ' + ca.nom : '').localeCompare(cb ? cb.prenom + ' ' + cb.nom : '', 'fr');
+  });
+
+  grid.innerHTML = collabIds.map(cid => {
+    const collab = DB.collaborateurs.find(x => x.id === cid);
+    if (!collab) return '';
+    const collabMissions = byCollab[cid];
+    const initiales = (collab.prenom[0] + collab.nom[0]).toUpperCase();
+
+    const missionItems = collabMissions.map(m => {
+      const client = DB.clients.find(x => x.id === m.clientId);
+      const statut = getStatut(m);
+      const badgeCls = statut === 'en_cours' ? 'badge-encours' : 'badge-terminee';
+      const periode = [m.debut, m.fin].filter(Boolean).map(d => formatDate(d)).join(' → ');
+      return `
+        <div style="padding:0.6rem 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem">
+            ${client ? `<span style="font-size:0.9rem;font-weight:600;color:var(--accent)">${client.nom}</span>` : ''}
+            <span class="badge ${badgeCls}" style="margin:0;font-size:0.7rem">${statut === 'en_cours' ? 'En cours' : 'Terminée'}</span>
+          </div>
+          ${m.titre ? `<div style="font-size:0.85rem;color:var(--text-muted)">${m.titre}</div>` : ''}
+          ${periode ? `<div style="font-size:0.8rem;color:var(--text-muted)">📅 ${periode}</div>` : ''}
+        </div>`;
+    }).join('');
 
     return `
     <div class="card">
-      <div class="card-logo">${client ? logoHtml(client.logo, 40, client.nom) : initialesHtml('', 40)}</div>
-      <span class="badge ${badgeCls}">${badgeLbl}</span>
-      <div class="card-title">${m.titre}</div>
-      ${client ? `<div class="card-client">${client.nom}</div>` : ''}
-      ${collabs ? `<div class="card-collab">👤 ${collabs}</div>` : ''}
-      ${periode ? `<div class="card-dates">📅 ${periode}</div>` : ''}
+      <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:1rem">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--card-alt);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent);font-size:1rem;flex-shrink:0">${initiales}</div>
+        <div>
+          <div style="font-weight:700;font-size:1rem">${collab.prenom} ${collab.nom}</div>
+          <div style="font-size:0.8rem;color:var(--text-muted)">${collabMissions.length} mission${collabMissions.length > 1 ? 's' : ''}</div>
+        </div>
+      </div>
+      ${missionItems}
     </div>`;
   }).join('');
 }
@@ -1542,7 +1785,8 @@ function renderAll() {
   renderMissions();
   refreshSelects();
   renderStats();
-  renderCards();
+  // Appliquer l'état initial de la vue
+  setView(currentView);
 }
 
 // ══════════════════════════════════════════
