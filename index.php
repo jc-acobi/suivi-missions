@@ -470,13 +470,16 @@
       gap: 0.35rem;
     }
     .client-collab-list li {
-      font-size: 0.87rem;
+      font-size: 0.80rem;
       color: var(--text);
-      line-height: 1.3;
+      line-height: 1.4;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .client-collab-list li .collab-date {
       color: var(--text-muted);
-      font-size: 0.82rem;
+      font-size: 0.78rem;
     }
 
     /* ── IMPORT EXCEL ── */
@@ -1638,7 +1641,7 @@ function renderCards() {
 function renderByClient() {
   const missions = getFilteredMissions();
   const grid = document.getElementById('missions-grid');
-  grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(220px, 1fr))';
+  grid.style.gridTemplateColumns = 'repeat(5, 1fr)';
 
   if (!missions.length) {
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
@@ -1680,7 +1683,7 @@ function renderByClient() {
     const collabItems = Object.entries(collabMap).map(([id, info]) => {
       const c = DB.collaborateurs.find(x => x.id === id);
       if (!c) return null;
-      const dateStr = info.debut ? `<span class="collab-date">${formatDate(info.debut)}</span>` : '';
+      const dateStr = info.debut ? `<span class="collab-date">${formatDateCourt(info.debut)}</span>` : '';
       return `<li>${c.prenom} ${c.nom} ${dateStr}</li>`;
     }).filter(Boolean).sort().join('');
 
@@ -1989,6 +1992,11 @@ function formatDate(d) {
   if (!d) return '';
   const [y, m, day] = d.split('-');
   return `${day}/${m}/${y}`;
+}
+function formatDateCourt(d) {
+  if (!d) return '';
+  const [y, m, day] = d.split('-');
+  return `${day}/${m}`;
 }
 
 // ══════════════════════════════════════════
