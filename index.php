@@ -738,6 +738,7 @@
     <button class="subtab-btn active" onclick="showSubTab('collab')">👤 Collaborateurs</button>
     <button class="subtab-btn" onclick="showSubTab('clients')">🏢 Clients</button>
     <button class="subtab-btn" onclick="showSubTab('missions')">📋 Missions</button>
+    <button class="subtab-btn" onclick="showSubTab('perimetre')">🎯 Périmètre Missions</button>
   </div>
 
   <!-- SOUS-ONGLET COLLABORATEURS -->
@@ -931,6 +932,63 @@
 
   </div><!-- /subtab-missions -->
 
+  <!-- SOUS-ONGLET PÉRIMÈTRE MISSIONS -->
+  <div id="subtab-perimetre" class="subtab-content">
+
+    <!-- PÉRIMÈTRE MÉTIER -->
+    <div class="section-title">🎯 Périmètre Métier</div>
+    <div class="form-card">
+      <h3 id="pm-form-title">Ajouter une valeur</h3>
+      <input type="hidden" id="pm-edit-id">
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>Valeur</label>
+          <input type="text" id="pm-nom" placeholder="ex. Finance, RH, Supply Chain…">
+        </div>
+      </div>
+      <div style="display:flex;gap:0.75rem">
+        <button class="btn btn-primary" id="pm-submit-btn" onclick="savePerimetre()">Ajouter</button>
+        <button class="btn" id="pm-cancel-btn" style="display:none;background:var(--card-alt);color:var(--text)" onclick="cancelEditPerimetre()">Annuler</button>
+      </div>
+    </div>
+    <table class="data-table" style="width:100%">
+      <thead><tr>
+        <th>Valeur</th>
+        <th style="width:140px">Actions</th>
+      </tr></thead>
+    </table>
+    <div style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px">
+      <table class="data-table" style="width:100%"><tbody id="tbody-perimetres"></tbody></table>
+    </div>
+
+    <!-- MÉTHODES / OUTILS CLÉS -->
+    <div class="section-title" style="margin-top:2.5rem">🔧 Méthodes / Outils clés</div>
+    <div class="form-card">
+      <h3 id="mo-form-title">Ajouter une valeur</h3>
+      <input type="hidden" id="mo-edit-id">
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label>Valeur</label>
+          <input type="text" id="mo-nom" placeholder="ex. Agile, Lean, SAP, Power BI…">
+        </div>
+      </div>
+      <div style="display:flex;gap:0.75rem">
+        <button class="btn btn-primary" id="mo-submit-btn" onclick="saveMethode()">Ajouter</button>
+        <button class="btn" id="mo-cancel-btn" style="display:none;background:var(--card-alt);color:var(--text)" onclick="cancelEditMethode()">Annuler</button>
+      </div>
+    </div>
+    <table class="data-table" style="width:100%">
+      <thead><tr>
+        <th>Valeur</th>
+        <th style="width:140px">Actions</th>
+      </tr></thead>
+    </table>
+    <div style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px">
+      <table class="data-table" style="width:100%"><tbody id="tbody-methodes"></tbody></table>
+    </div>
+
+  </div><!-- /subtab-perimetre -->
+
 </div>
 
 <!-- TOAST -->
@@ -1031,7 +1089,9 @@
 let DB = {
   collaborateurs: [],
   clients: [],
-  missions: []
+  missions: [],
+  perimetres: [],
+  methodes: []
 };
 let deleteCallback = null;
 
@@ -1048,7 +1108,7 @@ async function load() {
   try {
     const res = await fetch('api.php');
     const data = await res.json();
-    DB = { collaborateurs: data.collaborateurs || [], missions: data.missions || [], clients: data.clients || [] };
+    DB = { collaborateurs: data.collaborateurs || [], missions: data.missions || [], clients: data.clients || [], perimetres: data.perimetres || [], methodes: data.methodes || [] };
   } catch(e) {
     DB = { collaborateurs: [], missions: [], clients: [] };
   }
@@ -1889,6 +1949,8 @@ function renderAll() {
   renderCollaborateurs();
   renderClients();
   renderMissions();
+  renderPerimetres();
+  renderMethodes();
   refreshSelects();
   renderStats();
   // Appliquer l'état initial de la vue
@@ -2100,6 +2162,124 @@ function formatDateCourt(d) {
   if (!d) return '';
   const [y, m, day] = d.split('-');
   return `${day}/${m}/${y.slice(2)}`;
+}
+
+// ══════════════════════════════════════════
+//  PÉRIMÈTRE MÉTIER
+// ══════════════════════════════════════════
+function savePerimetre() {
+  const editId = document.getElementById('pm-edit-id').value;
+  const nom = document.getElementById('pm-nom').value.trim();
+  if (!nom) { toast('Valeur requise', 'error'); return; }
+  if (editId) {
+    const p = DB.perimetres.find(x => x.id === editId);
+    if (p) p.nom = nom;
+    toast('Valeur modifiée ✓');
+  } else {
+    DB.perimetres.push({ id: uid(), nom });
+    toast('Valeur ajoutée ✓');
+  }
+  save();
+  resetPerimetreForm();
+  renderPerimetres();
+}
+function resetPerimetreForm() {
+  document.getElementById('pm-edit-id').value = '';
+  document.getElementById('pm-nom').value = '';
+  document.getElementById('pm-form-title').textContent = 'Ajouter une valeur';
+  document.getElementById('pm-submit-btn').textContent = 'Ajouter';
+  document.getElementById('pm-cancel-btn').style.display = 'none';
+}
+function editPerimetre(id) {
+  const p = DB.perimetres.find(x => x.id === id);
+  document.getElementById('pm-edit-id').value = id;
+  document.getElementById('pm-nom').value = p.nom;
+  document.getElementById('pm-form-title').textContent = 'Modifier la valeur';
+  document.getElementById('pm-submit-btn').textContent = 'Enregistrer';
+  document.getElementById('pm-cancel-btn').style.display = 'inline-block';
+}
+function cancelEditPerimetre() { resetPerimetreForm(); }
+function deletePerimetre(id) {
+  const p = DB.perimetres.find(x => x.id === id);
+  openModal(`Supprimer "${p.nom}" ?`, () => {
+    DB.perimetres = DB.perimetres.filter(x => x.id !== id);
+    save(); renderPerimetres(); toast('Valeur supprimée');
+  });
+}
+function renderPerimetres() {
+  const tbody = document.getElementById('tbody-perimetres');
+  const list = [...(DB.perimetres || [])].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="2" style="color:var(--text-muted);text-align:center;padding:1.5rem">Aucune valeur</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(p => `
+    <tr>
+      <td>${p.nom}</td>
+      <td style="display:flex;gap:0.5rem">
+        <button class="btn btn-primary btn-sm" onclick="editPerimetre('${p.id}')">Modifier</button>
+        <button class="btn btn-danger btn-sm" onclick="deletePerimetre('${p.id}')">Supprimer</button>
+      </td>
+    </tr>`).join('');
+}
+
+// ══════════════════════════════════════════
+//  MÉTHODES / OUTILS CLÉS
+// ══════════════════════════════════════════
+function saveMethode() {
+  const editId = document.getElementById('mo-edit-id').value;
+  const nom = document.getElementById('mo-nom').value.trim();
+  if (!nom) { toast('Valeur requise', 'error'); return; }
+  if (editId) {
+    const m = DB.methodes.find(x => x.id === editId);
+    if (m) m.nom = nom;
+    toast('Valeur modifiée ✓');
+  } else {
+    DB.methodes.push({ id: uid(), nom });
+    toast('Valeur ajoutée ✓');
+  }
+  save();
+  resetMethodeForm();
+  renderMethodes();
+}
+function resetMethodeForm() {
+  document.getElementById('mo-edit-id').value = '';
+  document.getElementById('mo-nom').value = '';
+  document.getElementById('mo-form-title').textContent = 'Ajouter une valeur';
+  document.getElementById('mo-submit-btn').textContent = 'Ajouter';
+  document.getElementById('mo-cancel-btn').style.display = 'none';
+}
+function editMethode(id) {
+  const m = DB.methodes.find(x => x.id === id);
+  document.getElementById('mo-edit-id').value = id;
+  document.getElementById('mo-nom').value = m.nom;
+  document.getElementById('mo-form-title').textContent = 'Modifier la valeur';
+  document.getElementById('mo-submit-btn').textContent = 'Enregistrer';
+  document.getElementById('mo-cancel-btn').style.display = 'inline-block';
+}
+function cancelEditMethode() { resetMethodeForm(); }
+function deleteMethode(id) {
+  const m = DB.methodes.find(x => x.id === id);
+  openModal(`Supprimer "${m.nom}" ?`, () => {
+    DB.methodes = DB.methodes.filter(x => x.id !== id);
+    save(); renderMethodes(); toast('Valeur supprimée');
+  });
+}
+function renderMethodes() {
+  const tbody = document.getElementById('tbody-methodes');
+  const list = [...(DB.methodes || [])].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="2" style="color:var(--text-muted);text-align:center;padding:1.5rem">Aucune valeur</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(m => `
+    <tr>
+      <td>${m.nom}</td>
+      <td style="display:flex;gap:0.5rem">
+        <button class="btn btn-primary btn-sm" onclick="editMethode('${m.id}')">Modifier</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteMethode('${m.id}')">Supprimer</button>
+      </td>
+    </tr>`).join('');
 }
 
 // ══════════════════════════════════════════
