@@ -3220,7 +3220,7 @@ function renderPerimetres() {
   tbody.innerHTML = list.map(p => `
     <tr>
       <td>${p.nom}</td>
-      <td style="display:flex;gap:0.5rem">
+      <td style="display:flex;gap:0.5rem;justify-content:flex-end">
         <button class="btn btn-primary btn-sm" onclick="editPerimetre('${p.id}')">Modifier</button>
         <button class="btn btn-danger btn-sm" onclick="deletePerimetre('${p.id}')">Supprimer</button>
       </td>
@@ -3279,7 +3279,7 @@ function renderMethodes() {
   tbody.innerHTML = list.map(m => `
     <tr>
       <td>${m.nom}</td>
-      <td style="display:flex;gap:0.5rem">
+      <td style="display:flex;gap:0.5rem;justify-content:flex-end">
         <button class="btn btn-primary btn-sm" onclick="editMethode('${m.id}')">Modifier</button>
         <button class="btn btn-danger btn-sm" onclick="deleteMethode('${m.id}')">Supprimer</button>
       </td>
