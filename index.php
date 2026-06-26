@@ -2511,7 +2511,7 @@ function renderStats() {
   const lignesNouveaux  = nouveauxClients.map(id => { const cl = DB.clients.find(x => x.id === id); return cl ? '· ' + cl.nom : ''; }).filter(Boolean).join('\n');
   const lignesArret     = clientsArretesIds.map(id => { const cl = DB.clients.find(x => x.id === id); return cl ? '· ' + cl.nom : ''; }).filter(Boolean).join('\n');
   const tooltipNouveaux = (lignesNouveaux || lignesArret)
-    ? (lignesNouveaux ? 'Nouveaux clients :\n' + lignesNouveaux : '')
+    ? (lignesNouveaux ? lignesNouveaux : '')
       + (lignesNouveaux && lignesArret ? '\n\n' : '')
       + (lignesArret ? 'Clients arrêtés :\n' + lignesArret : '')
     : '';
