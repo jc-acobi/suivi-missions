@@ -724,7 +724,7 @@
   <div class="filters" style="align-items:flex-start">
     <div class="filter-group">
       <label>Collaborateur</label>
-      <div style="position:relative;min-width:220px">
+      <div style="position:relative;min-width:320px">
         <input type="text" id="cv-collab-search" placeholder="Rechercher un collaborateur…" autocomplete="off"
           oninput="filterCVCollabDD()" onfocus="showCVCollabDD()" onblur="hideCVCollabDD()"
           style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0.5rem 0.9rem;font-family:'Nunito',sans-serif;font-size:0.9rem;width:100%">
