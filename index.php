@@ -1259,6 +1259,7 @@
         <table class="data-table" style="width:100%">
           <thead><tr>
             <th>Valeur</th>
+            <th style="width:80px;text-align:center">Missions</th>
             <th style="width:140px">Actions</th>
           </tr></thead>
         </table>
@@ -1287,6 +1288,7 @@
         <table class="data-table" style="width:100%">
           <thead><tr>
             <th>Valeur</th>
+            <th style="width:80px;text-align:center">Missions</th>
             <th style="width:140px">Actions</th>
           </tr></thead>
         </table>
@@ -3250,17 +3252,21 @@ function renderPerimetres() {
   const tbody = document.getElementById('tbody-perimetres');
   const list = [...(DB.perimetres || [])].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="2" style="color:var(--text-muted);text-align:center;padding:1.5rem">Aucune valeur</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted);text-align:center;padding:1.5rem">Aucune valeur</td></tr>';
     return;
   }
-  tbody.innerHTML = list.map(p => `
+  tbody.innerHTML = list.map(p => {
+    const nb = DB.missions.filter(m => (m.perimetreIds || []).includes(p.id)).length;
+    return `
     <tr>
       <td>${p.nom}</td>
+      <td style="text-align:center;color:var(--text-muted)">${nb || '—'}</td>
       <td style="display:flex;gap:0.5rem;justify-content:flex-end">
         <button class="btn btn-primary btn-sm" onclick="editPerimetre('${p.id}')">Modifier</button>
         <button class="btn btn-danger btn-sm" onclick="deletePerimetre('${p.id}')">Supprimer</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 // ══════════════════════════════════════════
@@ -3327,17 +3333,21 @@ function renderMethodes() {
   const tbody = document.getElementById('tbody-methodes');
   const list = [...(DB.methodes || [])].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="2" style="color:var(--text-muted);text-align:center;padding:1.5rem">Aucune valeur</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted);text-align:center;padding:1.5rem">Aucune valeur</td></tr>';
     return;
   }
-  tbody.innerHTML = list.map(m => `
+  tbody.innerHTML = list.map(m => {
+    const nb = DB.missions.filter(x => (x.methodeIds || []).includes(m.id)).length;
+    return `
     <tr>
       <td>${m.nom}</td>
+      <td style="text-align:center;color:var(--text-muted)">${nb || '—'}</td>
       <td style="display:flex;gap:0.5rem;justify-content:flex-end">
         <button class="btn btn-primary btn-sm" onclick="editMethode('${m.id}')">Modifier</button>
         <button class="btn btn-danger btn-sm" onclick="deleteMethode('${m.id}')">Supprimer</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 // ══════════════════════════════════════════
