@@ -797,7 +797,7 @@
       gap: 1rem;
       margin-bottom: 2rem;
       align-items: flex-start;
-      overflow-x: auto;
+      overflow: visible;
     }
     .stat-chip {
       background: var(--card-bg);
@@ -807,6 +807,7 @@
       display: flex;
       flex-direction: column;
       gap: 0.2rem;
+      position: relative;
     }
     .stat-chip .val { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
     .stat-chip .lbl { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; }
