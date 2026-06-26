@@ -909,6 +909,15 @@
       </div>
     </div>
 
+    <!-- Filtre effectifs (commun) -->
+    <div class="filter-group">
+      <label>Effectifs</label>
+      <div class="radio-group">
+        <label class="radio-option"><input type="radio" name="an-effectifs" value="" checked onchange="renderAnalyse()"><span>Tous</span></label>
+        <label class="radio-option"><input type="radio" name="an-effectifs" value="actif" onchange="renderAnalyse()"><span>Dans les effectifs à date</span></label>
+      </div>
+    </div>
+
   </div>
 
   <div id="analyse-content">
@@ -2470,6 +2479,16 @@ function formatDateCourt(d) {
 // ══════════════════════════════════════════
 let analyseView = 'perimetre';
 
+function filtreEffectifsActifs() {
+  const el = document.querySelector('input[name="an-effectifs"]:checked');
+  return el && el.value === 'actif';
+}
+function collabEstActif(id) {
+  const today = new Date().toISOString().split('T')[0];
+  const c = DB.collaborateurs.find(x => x.id === id);
+  return c && (!c.dateSortie || c.dateSortie >= today);
+}
+
 function setAnalyseView(view) {
   analyseView = view;
   document.getElementById('an-btn-perimetre').classList.toggle('active', view === 'perimetre');
@@ -2516,6 +2535,10 @@ function renderAnalyse() {
   let missions = DB.missions.filter(m => {
     if (perimetreId && !(m.perimetreIds || []).includes(perimetreId)) return false;
     if (fStatut && getStatut(m) !== fStatut) return false;
+    if (filtreEffectifsActifs()) {
+      const hasActif = (m.collabIds || []).some(id => collabEstActif(id));
+      if (!hasActif) return false;
+    }
     return true;
   });
 
@@ -2705,7 +2728,12 @@ function renderAnalyseMethodes() {
   // Missions ayant au moins une des méthodes sélectionnées
   let missions = DB.missions.filter(m => {
     if (fStatut && getStatut(m) !== fStatut) return false;
-    return (m.methodeIds || []).some(id => selIds.includes(id));
+    if (!(m.methodeIds || []).some(id => selIds.includes(id))) return false;
+    if (filtreEffectifsActifs()) {
+      const hasActif = (m.collabIds || []).some(id => collabEstActif(id));
+      if (!hasActif) return false;
+    }
+    return true;
   });
 
   const selNoms = selIds.map(id => { const mo = DB.methodes.find(x => x.id === id); return mo ? mo.nom : ''; }).filter(Boolean);
