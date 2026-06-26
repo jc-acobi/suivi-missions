@@ -998,10 +998,8 @@
       <th class="sortable" onclick="sortTable('collabs','copilote')">Co-pilote</th>
       <th>Actions</th>
     </tr></thead>
+    <tbody id="tbody-collabs"></tbody>
   </table>
-  <div style="max-height:296px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px">
-    <table class="data-table" style="width:100%"><tbody id="tbody-collabs"></tbody></table>
-  </div>
 
   </div><!-- /subtab-collab -->
 
@@ -1137,10 +1135,8 @@
       <th class="sortable" onclick="sortTable('missions','statut')">Statut</th>
       <th style="min-width:140px">Actions</th>
     </tr></thead>
+    <tbody id="tbody-missions"></tbody>
   </table>
-  <div style="max-height:400px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px">
-    <table class="data-table" style="width:100%"><tbody id="tbody-missions"></tbody></table>
-  </div>
 
   </div><!-- /subtab-missions -->
 
