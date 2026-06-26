@@ -794,9 +794,10 @@
 
     .stat-row {
       display: flex;
-      gap: 1.5rem;
+      gap: 1rem;
       margin-bottom: 2rem;
-      flex-wrap: wrap;
+      align-items: flex-start;
+      overflow-x: auto;
     }
     .stat-chip {
       background: var(--card-bg);
@@ -2487,11 +2488,11 @@ function renderStats() {
     <div style="width:1px;background:var(--border);align-self:stretch;margin:0 0.5rem"></div>
     <div style="display:flex;flex-direction:column;gap:0.4rem">
       <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);font-weight:700;padding-left:0.2rem">Année ${annee}</div>
-      <div style="display:flex;gap:0.8rem;flex-wrap:wrap">
-        <div class="stat-chip" ${tooltipDemarrages ? `data-tooltip="${tooltipDemarrages.replace(/"/g,'&quot;')}"` : ''}><span class="val" style="color:var(--accent2)">${demarragesAnnee}</span><span class="lbl">Démarrages ${demarragesAnnee > 0 ? '🛈' : ''}</span></div>
-        <div class="stat-chip" ${tooltipTerminees ? `data-tooltip="${tooltipTerminees.replace(/"/g,'&quot;')}"` : ''}><span class="val">${termineesAnnee}</span><span class="lbl">Terminées ${termineesAnnee > 0 ? '🛈' : ''}</span></div>
+      <div style="display:flex;gap:0.8rem">
+        <div class="stat-chip" ${tooltipDemarrages ? `data-tooltip="${tooltipDemarrages.replace(/"/g,'&quot;')}"` : ''}><span class="val" style="color:var(--accent2)">${demarragesAnnee}</span><span class="lbl">Démarrages</span></div>
+        <div class="stat-chip" ${tooltipTerminees ? `data-tooltip="${tooltipTerminees.replace(/"/g,'&quot;')}"` : ''}><span class="val">${termineesAnnee}</span><span class="lbl">Terminées</span></div>
         <div class="stat-chip"><span class="val" style="color:var(--warning)">${nbClientsAnnee}</span><span class="lbl">Clients différents</span></div>
-        <div class="stat-chip" ${tooltipNouveaux ? `data-tooltip="Nouveaux clients :\n${tooltipNouveaux}"` : ''}><span class="val" style="color:var(--accent)">${nbNouveauxClients}</span><span class="lbl">Nouveaux clients ${nbNouveauxClients > 0 ? '🛈' : ''}</span></div>
+        <div class="stat-chip" ${tooltipNouveaux ? `data-tooltip="Nouveaux clients :\n${tooltipNouveaux}"` : ''}><span class="val" style="color:var(--accent)">${nbNouveauxClients}</span><span class="lbl">Nouveaux clients</span></div>
       </div>
     </div>
     <div style="width:1px;background:var(--border);align-self:stretch;margin:0 0.5rem"></div>
@@ -2500,7 +2501,7 @@ function renderStats() {
       <div style="display:flex;gap:0.8rem">
         <div class="stat-chip"><span class="val" style="color:var(--accent)">${enCours}</span><span class="lbl">Missions en cours</span></div>
         <div class="stat-chip"><span class="val" style="color:var(--accent)">${clientsActifs}</span><span class="lbl">Clients actifs</span></div>
-        <div class="stat-chip"><span class="val" style="color:var(--warning)">${collabsPresents}</span><span class="lbl">Collaborateurs présents</span></div>
+        <div class="stat-chip"><span class="val" style="color:var(--warning)">${collabsPresents}</span><span class="lbl">Collaborateurs</span></div>
       </div>
     </div>
   `;
