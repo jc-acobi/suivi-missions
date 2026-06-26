@@ -2496,8 +2496,24 @@ function renderStats() {
     return !avantAnnee;
   });
   const nbNouveauxClients = nouveauxClients.length;
-  const tooltipNouveaux = nouveauxClients.length
-    ? nouveauxClients.map(id => { const cl = DB.clients.find(x => x.id === id); return cl ? '· ' + cl.nom : ''; }).filter(Boolean).join('\n')
+
+  // Clients arrêtés : avaient une mission active au 1/1/annee ET n'ont plus de mission en cours aujourd'hui
+  const clientsActifsAuDebutAnnee = new Set(
+    DB.missions
+      .filter(m => m.debut && m.debut <= debutAnnee && (!m.fin || m.fin >= debutAnnee))
+      .map(m => m.clientId).filter(Boolean)
+  );
+  const clientsAvecMissionEnCours = new Set(
+    DB.missions.filter(m => getStatut(m) === 'en_cours').map(m => m.clientId).filter(Boolean)
+  );
+  const clientsArretesIds = [...clientsActifsAuDebutAnnee].filter(id => !clientsAvecMissionEnCours.has(id));
+
+  const lignesNouveaux  = nouveauxClients.map(id => { const cl = DB.clients.find(x => x.id === id); return cl ? '· ' + cl.nom : ''; }).filter(Boolean).join('\n');
+  const lignesArret     = clientsArretesIds.map(id => { const cl = DB.clients.find(x => x.id === id); return cl ? '· ' + cl.nom : ''; }).filter(Boolean).join('\n');
+  const tooltipNouveaux = (lignesNouveaux || lignesArret)
+    ? (lignesNouveaux ? 'Nouveaux clients :\n' + lignesNouveaux : '')
+      + (lignesNouveaux && lignesArret ? '\n\n' : '')
+      + (lignesArret ? 'Clients arrêtés :\n' + lignesArret : '')
     : '';
 
   // Vision à l'instant T
