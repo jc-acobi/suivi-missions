@@ -2474,6 +2474,7 @@ function renderStats() {
   // Vision à l'instant T
   const enCours       = DB.missions.filter(m => getStatut(m) === 'en_cours').length;
   const clientsActifs = new Set(DB.missions.filter(m => getStatut(m) === 'en_cours').map(m => m.clientId).filter(Boolean)).size;
+  const collabsPresents = DB.collaborateurs.filter(c => c.dateEntree && c.dateEntree <= today && (!c.dateSortie || c.dateSortie > today)).length;
 
   document.getElementById('stats-row').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:0.4rem">
@@ -2499,6 +2500,7 @@ function renderStats() {
       <div style="display:flex;gap:0.8rem">
         <div class="stat-chip"><span class="val" style="color:var(--accent)">${enCours}</span><span class="lbl">Missions en cours</span></div>
         <div class="stat-chip"><span class="val" style="color:var(--accent)">${clientsActifs}</span><span class="lbl">Clients actifs</span></div>
+        <div class="stat-chip"><span class="val" style="color:var(--warning)">${collabsPresents}</span><span class="lbl">Collaborateurs présents</span></div>
       </div>
     </div>
   `;
@@ -2870,8 +2872,6 @@ function renderAnalyse() {
   content.innerHTML = `
     <div style="margin-bottom:0.5rem;font-size:1.05rem;font-weight:700;color:var(--text)">${perimetreNom}</div>
 
-    ${buildAnalyseStatsHtml(missions)}
-
     <div class="analyse-grid">
 
       <div class="analyse-card">
@@ -3039,9 +3039,6 @@ function renderAnalyseMethodes() {
 
   content.innerHTML = `
     <div style="margin-bottom:0.5rem;font-size:1.05rem;font-weight:700;color:var(--text)">${selNoms.join(', ')}</div>
-
-    ${buildAnalyseStatsHtml(missions)}
-    </div>
 
     <div class="analyse-grid">
 
