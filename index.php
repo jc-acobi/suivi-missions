@@ -2142,14 +2142,45 @@ function renderByCollab() {
 }
 
 function renderStats() {
-  const total    = DB.missions.length;
-  const encours  = DB.missions.filter(m => getStatut(m) === 'en_cours').length;
-  const termines = DB.missions.filter(m => getStatut(m) === 'terminee').length;
+  const today  = new Date().toISOString().split('T')[0];
+  const annee  = today.slice(0, 4);
+
+  // Vision globale
+  const totalMissions = DB.missions.length;
+  const totalClients  = DB.clients.length;
+
+  // Vision année en cours
+  const demarragesAnnee = DB.missions.filter(m => (m.debut || '').startsWith(annee)).length;
+  const termineesAnnee  = DB.missions.filter(m => (m.fin || '').startsWith(annee) && m.fin < today).length;
+
+  // Vision à l'instant T
+  const enCours       = DB.missions.filter(m => getStatut(m) === 'en_cours').length;
+  const clientsActifs = new Set(DB.missions.filter(m => getStatut(m) === 'en_cours').map(m => m.clientId).filter(Boolean)).size;
+
   document.getElementById('stats-row').innerHTML = `
-    <div class="stat-chip"><span class="val">${total}</span><span class="lbl">Missions totales</span></div>
-    <div class="stat-chip"><span class="val" style="color:var(--accent2)">${encours}</span><span class="lbl">En cours</span></div>
-    <div class="stat-chip"><span class="val">${termines}</span><span class="lbl">Terminées</span></div>
-    <div class="stat-chip"><span class="val" style="color:var(--warning)">${DB.clients.length}</span><span class="lbl">Clients</span></div>
+    <div style="display:flex;flex-direction:column;gap:0.4rem">
+      <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);font-weight:700;padding-left:0.2rem">Vision globale</div>
+      <div style="display:flex;gap:0.8rem">
+        <div class="stat-chip"><span class="val">${totalMissions}</span><span class="lbl">Missions totales</span></div>
+        <div class="stat-chip"><span class="val" style="color:var(--warning)">${totalClients}</span><span class="lbl">Clients total</span></div>
+      </div>
+    </div>
+    <div style="width:1px;background:var(--border);align-self:stretch;margin:0 0.5rem"></div>
+    <div style="display:flex;flex-direction:column;gap:0.4rem">
+      <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);font-weight:700;padding-left:0.2rem">Année ${annee}</div>
+      <div style="display:flex;gap:0.8rem">
+        <div class="stat-chip"><span class="val" style="color:var(--accent2)">${demarragesAnnee}</span><span class="lbl">Démarrages</span></div>
+        <div class="stat-chip"><span class="val">${termineesAnnee}</span><span class="lbl">Terminées</span></div>
+      </div>
+    </div>
+    <div style="width:1px;background:var(--border);align-self:stretch;margin:0 0.5rem"></div>
+    <div style="display:flex;flex-direction:column;gap:0.4rem">
+      <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);font-weight:700;padding-left:0.2rem">À l'instant T</div>
+      <div style="display:flex;gap:0.8rem">
+        <div class="stat-chip"><span class="val" style="color:var(--accent)">${enCours}</span><span class="lbl">Missions en cours</span></div>
+        <div class="stat-chip"><span class="val" style="color:var(--accent)">${clientsActifs}</span><span class="lbl">Clients actifs</span></div>
+      </div>
+    </div>
   `;
 }
 
