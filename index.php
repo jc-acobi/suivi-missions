@@ -531,6 +531,35 @@
       margin-top: 0.2rem;
     }
 
+    /* ── TAG PICKER ── */
+    .tag-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      min-height: 2rem;
+      align-items: center;
+    }
+    .tag-pick {
+      display: inline-block;
+      padding: 0.28rem 0.85rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--card-alt);
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .tag-pick:hover { border-color: var(--accent); color: var(--text); }
+    .tag-pick.selected {
+      background: rgba(93,216,184,0.18);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .tag-pick-empty { font-size: 0.82rem; color: var(--text-muted); font-style: italic; }
+
     /* ── IMPORT EXCEL ── */
     .import-zone {
       border: 2px dashed var(--border);
@@ -887,6 +916,18 @@
     </div>
     <div class="form-row">
       <div class="form-group" style="flex:1">
+        <label>Périmètre Métier</label>
+        <div class="tag-picker" id="m-perimetres"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:1">
+        <label>Méthodes / Outils clés</label>
+        <div class="tag-picker" id="m-methodes"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:1">
         <label>Détails de la mission</label>
         <textarea id="m-details" rows="3" placeholder="Description, contexte, objectifs…" style="width:100%;background:var(--card-alt);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.9rem;font-family:inherit;font-size:0.95rem;resize:vertical"></textarea>
       </div>
@@ -1067,6 +1108,18 @@
       <div class="form-group">
         <label>Date de fin</label>
         <input type="date" id="edit-fin">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:1">
+        <label>Périmètre Métier</label>
+        <div class="tag-picker" id="edit-perimetres"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:1">
+        <label>Méthodes / Outils clés</label>
+        <div class="tag-picker" id="edit-methodes"></div>
       </div>
     </div>
     <div class="form-row">
@@ -1568,6 +1621,10 @@ function refreshSelects() {
   fCollab.innerHTML = '<option value="">Tous</option>' +
     DB.collaborateurs.map(c => `<option value="${c.id}">${c.prenom} ${c.nom}</option>`).join('');
   fCollab.value = fCollab2;
+
+  // Tag pickers du formulaire d'ajout de mission
+  renderTagPicker('m-perimetres', DB.perimetres, []);
+  renderTagPicker('m-methodes',   DB.methodes,   []);
 }
 
 function importClients(input) {
@@ -1612,23 +1669,27 @@ function getStatut(m) {
 }
 
 function addMission(data = null) {
-  let titre, clientId, collabIds, debut, fin, details;
+  let titre, clientId, collabIds, debut, fin, details, perimetreIds, methodeIds;
   if (data) {
     ({ titre, clientId, collabIds, debut, fin, details } = data);
+    perimetreIds = data.perimetreIds || [];
+    methodeIds   = data.methodeIds   || [];
   } else {
-    titre     = document.getElementById('m-titre').value.trim();
-    clientId  = document.getElementById('m-client').value;
+    titre        = document.getElementById('m-titre').value.trim();
+    clientId     = document.getElementById('m-client').value;
     const collabId = document.getElementById('m-collabs').value;
-    collabIds = collabId ? [collabId] : [];
-    debut     = document.getElementById('m-debut').value;
-    fin       = document.getElementById('m-fin').value;
-    details   = document.getElementById('m-details').value.trim();
+    collabIds    = collabId ? [collabId] : [];
+    debut        = document.getElementById('m-debut').value;
+    fin          = document.getElementById('m-fin').value;
+    details      = document.getElementById('m-details').value.trim();
+    perimetreIds = getSelectedTags('m-perimetres');
+    methodeIds   = getSelectedTags('m-methodes');
     if (!clientId) { toast('Client requis', 'error'); return; }
     if (!collabId) { toast('Collaborateur requis', 'error'); return; }
     if (!debut)    { toast('Date de début requise', 'error'); return; }
   }
 
-  DB.missions.push({ id: uid(), titre, clientId, collabIds, debut, fin: fin || '', details: details || '' });
+  DB.missions.push({ id: uid(), titre, clientId, collabIds, debut, fin: fin || '', details: details || '', perimetreIds: perimetreIds || [], methodeIds: methodeIds || [] });
   save();
 
   if (!data) {
@@ -1639,6 +1700,8 @@ function addMission(data = null) {
     document.getElementById('m-debut').value = '';
     document.getElementById('m-fin').value = '';
     document.getElementById('m-details').value = '';
+    renderTagPicker('m-perimetres', DB.perimetres, []);
+    renderTagPicker('m-methodes',   DB.methodes,   []);
   }
   renderMissions();
   toast('Mission ajoutée ✓');
@@ -1665,6 +1728,10 @@ function openEditMission(id) {
   document.getElementById('edit-collabs').value = firstCollabId;
   document.getElementById('edit-collab-search').value = firstCollab ? firstCollab.prenom + ' ' + firstCollab.nom : '';
 
+  // Pré-remplir les tags
+  renderTagPicker('edit-perimetres', DB.perimetres, m.perimetreIds || []);
+  renderTagPicker('edit-methodes',   DB.methodes,   m.methodeIds   || []);
+
   document.getElementById('modal-edit').classList.add('open');
 }
 
@@ -1682,9 +1749,12 @@ function saveEditMission() {
   const fin      = document.getElementById('edit-fin').value;
   const details  = document.getElementById('edit-details').value.trim();
 
+  const perimetreIds = getSelectedTags('edit-perimetres');
+  const methodeIds   = getSelectedTags('edit-methodes');
+
   const idx = DB.missions.findIndex(x => x.id === id);
   if (idx === -1) return;
-  DB.missions[idx] = { id, titre, clientId, collabIds, debut, fin: fin || '', details };
+  DB.missions[idx] = { id, titre, clientId, collabIds, debut, fin: fin || '', details, perimetreIds, methodeIds };
   save();
   closeEditModal();
   renderMissions();
@@ -2165,6 +2235,26 @@ function formatDateCourt(d) {
   if (!d) return '';
   const [y, m, day] = d.split('-');
   return `${day}/${m}/${y.slice(2)}`;
+}
+
+// ══════════════════════════════════════════
+//  TAG PICKER
+// ══════════════════════════════════════════
+function renderTagPicker(containerId, items, selectedIds) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!items || !items.length) {
+    container.innerHTML = '<span class="tag-pick-empty">Aucune valeur — ajoutez-en dans Paramétrage &gt; Périmètre Missions</span>';
+    return;
+  }
+  const sel = selectedIds || [];
+  container.innerHTML = items
+    .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
+    .map(item => `<span class="tag-pick${sel.includes(item.id) ? ' selected' : ''}" data-id="${item.id}" onclick="this.classList.toggle('selected')">${item.nom}</span>`)
+    .join('');
+}
+function getSelectedTags(containerId) {
+  return [...document.querySelectorAll(`#${containerId} .tag-pick.selected`)].map(el => el.dataset.id);
 }
 
 // ══════════════════════════════════════════
