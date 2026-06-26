@@ -2139,12 +2139,18 @@ function renderCollabView() {
     return true;
   });
 
-  // Trier : en cours en premier, puis terminées ; sous-tri date de début décroissante
+  // Tri champ 1 : En cours avant Terminées — champ 2 : date début décroissante
   missions = missions.sort((a, b) => {
-    const sa = getStatut(a) === 'en_cours' ? 0 : 1;
-    const sb = getStatut(b) === 'en_cours' ? 0 : 1;
-    if (sa !== sb) return sa - sb;
-    return (b.debut || '').localeCompare(a.debut || '');
+    const aEncours = getStatut(a) === 'en_cours';
+    const bEncours = getStatut(b) === 'en_cours';
+    if (aEncours && !bEncours) return -1;   // a en cours, b terminé → a avant
+    if (!aEncours && bEncours) return 1;    // a terminé, b en cours → b avant
+    // même statut : date de début décroissante
+    const da = a.debut || '';
+    const db = b.debut || '';
+    if (db > da) return 1;
+    if (db < da) return -1;
+    return 0;
   });
 
   if (!missions.length) {
