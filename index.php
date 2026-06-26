@@ -279,6 +279,12 @@
       font-size: 0.9rem;
     }
     .collab-dd-item:hover { background: var(--card-alt); }
+    .search-clear-btn {
+      position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: var(--text-muted);
+      font-size: 1rem; line-height: 1; padding: 0 0.2rem; display: none;
+    }
+    .search-clear-btn:hover { color: var(--danger); }
 
     /* ── SOUS-ONGLETS PARAMÉTRAGE ── */
     .subtabs {
@@ -886,8 +892,9 @@
       <label>Collaborateur</label>
       <div style="position:relative;min-width:320px">
         <input type="text" id="cv-collab-search" placeholder="Rechercher un collaborateur…" autocomplete="off"
-          oninput="filterCVCollabDD()" onfocus="showCVCollabDD()" onblur="hideCVCollabDD()"
-          style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0.5rem 0.9rem;font-family:'Nunito',sans-serif;font-size:0.9rem;width:100%">
+          oninput="filterCVCollabDD();toggleClearBtn('cv-collab')" onfocus="showCVCollabDD()" onblur="hideCVCollabDD()"
+          style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0.5rem 2rem 0.5rem 0.9rem;font-family:'Nunito',sans-serif;font-size:0.9rem;width:100%">
+        <button class="search-clear-btn" id="cv-collab-clear" onclick="clearSearchFilter('cv-collab','renderCollabView')" title="Vider le filtre">✕</button>
         <input type="hidden" id="cv-collab-id">
         <div id="cv-collab-dd" class="collab-dropdown"></div>
       </div>
@@ -1049,8 +1056,9 @@
       <label>Co-pilote</label>
       <div style="position:relative;min-width:260px">
         <input type="text" id="fc-copilote-search" placeholder="Rechercher un co-pilote…" autocomplete="off"
-          oninput="filterFCCopiloteDD()" onfocus="showFCCopiloteDD()" onblur="hideFCCopiloteDD()"
-          style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0.5rem 0.9rem;font-family:'Nunito',sans-serif;font-size:0.9rem;width:100%">
+          oninput="filterFCCopiloteDD();toggleClearBtn('fc-copilote')" onfocus="showFCCopiloteDD()" onblur="hideFCCopiloteDD()"
+          style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0.5rem 2rem 0.5rem 0.9rem;font-family:'Nunito',sans-serif;font-size:0.9rem;width:100%">
+        <button class="search-clear-btn" id="fc-copilote-clear" onclick="clearSearchFilter('fc-copilote','renderCollaborateurs')" title="Vider le filtre">✕</button>
         <input type="hidden" id="fc-copilote-id">
         <div id="fc-copilote-dd" class="collab-dropdown"></div>
       </div>
@@ -1758,6 +1766,7 @@ function selectFCCopilote(id, label) {
   document.getElementById('fc-copilote-id').value = id;
   document.getElementById('fc-copilote-search').value = label;
   document.getElementById('fc-copilote-dd').style.display = 'none';
+  toggleClearBtn('fc-copilote');
   renderCollaborateurs();
 }
 
@@ -3286,10 +3295,23 @@ function showCVCollabDD() { filterCVCollabDD(); }
 function hideCVCollabDD() {
   setTimeout(() => { const dd = document.getElementById('cv-collab-dd'); if (dd) dd.style.display = 'none'; }, 200);
 }
+function toggleClearBtn(prefix) {
+  const val = document.getElementById(prefix + '-search').value;
+  const btn = document.getElementById(prefix + '-clear');
+  if (btn) btn.style.display = val ? 'block' : 'none';
+}
+function clearSearchFilter(prefix, renderFn) {
+  document.getElementById(prefix + '-search').value = '';
+  document.getElementById(prefix + '-id').value = '';
+  toggleClearBtn(prefix);
+  window[renderFn]();
+}
+
 function selectCVCollab(id, label) {
   document.getElementById('cv-collab-id').value = id;
   document.getElementById('cv-collab-search').value = label;
   document.getElementById('cv-collab-dd').style.display = 'none';
+  toggleClearBtn('cv-collab');
   renderCollabView();
 }
 
