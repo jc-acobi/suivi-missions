@@ -588,6 +588,54 @@
     .analyse-bar-bg { flex: 1; height: 6px; background: var(--card-alt); border-radius: 3px; overflow: hidden; }
     .analyse-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.4s; }
 
+    /* ── MULTI-SELECT CUSTOM ── */
+    .ms-wrapper { position: relative; min-width: 200px; }
+    .ms-btn {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 0.5rem 0.9rem;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .ms-btn:hover, .ms-btn.open { border-color: var(--accent); }
+    .ms-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      z-index: 200;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+      overflow: hidden;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .ms-dropdown.open { display: block; }
+    .ms-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.5rem 0.9rem;
+      cursor: pointer;
+      font-size: 0.88rem;
+      transition: background 0.12s;
+    }
+    .ms-item:hover { background: var(--card-alt); }
+    .ms-item.ms-all { border-bottom: 1px solid var(--border); font-weight: 700; color: var(--accent); }
+    .ms-item input[type=checkbox] { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
+
     /* ── INFOBULLE ── */
     .stat-chip { position: relative; }
     .stat-chip[data-tooltip]:hover::after {
@@ -986,6 +1034,32 @@
     <div style="display:flex;gap:0.75rem">
       <button class="btn btn-primary" id="c-submit-btn" onclick="saveCollaborateur()">Ajouter</button>
       <button class="btn" id="c-cancel-btn" style="display:none;background:var(--card-alt);color:var(--text)" onclick="cancelEditCollaborateur()">Annuler</button>
+    </div>
+  </div>
+
+  <div class="filters" style="align-items:flex-start;margin-bottom:1.2rem">
+    <div class="filter-group">
+      <label>Statut</label>
+      <div class="radio-group">
+        <label class="radio-option"><input type="radio" name="fc-statut" value="" checked onchange="renderCollaborateurs()"><span>Tous</span></label>
+        <label class="radio-option"><input type="radio" name="fc-statut" value="present" onchange="renderCollaborateurs()"><span>Présent à date</span></label>
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Année d'arrivée</label>
+      <div class="ms-wrapper" id="fc-annee-wrapper">
+        <button class="ms-btn" id="fc-annee-btn" onclick="toggleMsDropdown('fc-annee')">
+          <span id="fc-annee-label">Toutes les années</span>
+          <span style="font-size:0.7rem;opacity:0.6">▼</span>
+        </button>
+        <div class="ms-dropdown" id="fc-annee-dd">
+          <label class="ms-item ms-all">
+            <input type="checkbox" id="fc-annee-all" onchange="toggleAllAnnees(this)">
+            Sélectionner / Désélectionner tout
+          </label>
+          <div id="fc-annee-options"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1607,10 +1681,68 @@ function deleteCollaborateur(id) {
   });
 }
 
+// ── Multi-select années ──
+function toggleMsDropdown(id) {
+  const dd  = document.getElementById(id + '-dd');
+  const btn = document.getElementById(id + '-btn');
+  const isOpen = dd.classList.contains('open');
+  document.querySelectorAll('.ms-dropdown.open').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.ms-btn.open').forEach(el => el.classList.remove('open'));
+  if (!isOpen) { dd.classList.add('open'); btn.classList.add('open'); }
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.ms-wrapper')) {
+    document.querySelectorAll('.ms-dropdown.open').forEach(el => el.classList.remove('open'));
+    document.querySelectorAll('.ms-btn.open').forEach(el => el.classList.remove('open'));
+  }
+});
+function toggleAllAnnees(el) {
+  document.querySelectorAll('#fc-annee-options input[type=checkbox]').forEach(cb => cb.checked = el.checked);
+  updateAnneesLabel();
+  renderCollaborateurs();
+}
+function updateAnneesLabel() {
+  const all  = [...document.querySelectorAll('#fc-annee-options input[type=checkbox]')];
+  const sel  = all.filter(cb => cb.checked);
+  const allEl = document.getElementById('fc-annee-all');
+  allEl.checked = sel.length === all.length;
+  allEl.indeterminate = sel.length > 0 && sel.length < all.length;
+  document.getElementById('fc-annee-label').textContent = sel.length === 0 || sel.length === all.length
+    ? 'Toutes les années'
+    : sel.map(cb => cb.value).join(', ');
+}
+function refreshAnneesOptions() {
+  const annees = [...new Set(DB.collaborateurs.map(c => (c.dateEntree||'').slice(0,4)).filter(Boolean))].sort();
+  const container = document.getElementById('fc-annee-options');
+  if (!container) return;
+  const prev = [...document.querySelectorAll('#fc-annee-options input:checked')].map(cb => cb.value);
+  container.innerHTML = annees.map(a => `
+    <label class="ms-item">
+      <input type="checkbox" value="${a}" ${prev.length === 0 || prev.includes(a) ? 'checked' : ''} onchange="updateAnneesLabel();renderCollaborateurs()">
+      ${a}
+    </label>`).join('');
+  updateAnneesLabel();
+}
+function getSelectedAnnees() {
+  const all = [...document.querySelectorAll('#fc-annee-options input[type=checkbox]')];
+  const sel = all.filter(cb => cb.checked).map(cb => cb.value);
+  return sel.length === all.length ? [] : sel; // [] = tout sélectionné = pas de filtre
+}
+
 function renderCollaborateurs() {
   const tbody = document.getElementById('tbody-collabs');
   updateSortHeaders('table-collabs', 'collabs');
-  const list = applySortCollabs(DB.collaborateurs);
+  const today = new Date().toISOString().split('T')[0];
+  const fStatut = document.querySelector('input[name="fc-statut"]:checked');
+  const statutVal = fStatut ? fStatut.value : '';
+  const anneesFilter = getSelectedAnnees();
+
+  let allCollabs = DB.collaborateurs.filter(c => {
+    if (statutVal === 'present' && c.dateSortie && c.dateSortie < today) return false;
+    if (anneesFilter.length && !anneesFilter.includes((c.dateEntree||'').slice(0,4))) return false;
+    return true;
+  });
+  const list = applySortCollabs(allCollabs);
   if (!list.length) {
     tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text-muted);text-align:center;padding:1.5rem">Aucun collaborateur</td></tr>';
     return;
@@ -1686,6 +1818,7 @@ function importCollaborateurs(input) {
       });
 
       save();
+      refreshAnneesOptions();
       renderCollaborateurs();
       refreshSelects();
       toast(`${added} collaborateur(s) importé(s) ✓`);
@@ -2327,6 +2460,7 @@ function renderStats() {
 }
 
 function renderAll() {
+  refreshAnneesOptions();
   renderCollaborateurs();
   renderClients();
   renderMissions();
