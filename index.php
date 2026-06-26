@@ -1128,7 +1128,7 @@
     <button class="btn" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:0.5rem 1rem;font-size:0.85rem" onclick="document.getElementById('param-f-client').value='';document.getElementById('param-f-collab').value='';document.getElementById('param-f-statut').value='';renderMissions()">✕ Effacer</button>
   </div>
 
-  <table class="data-table" id="table-missions">
+  <table class="data-table" id="table-missions" style="width:100%">
     <thead><tr>
       <th class="sortable" onclick="sortTable('missions','titre')">Mission</th>
       <th class="sortable" onclick="sortTable('missions','client')">Client</th>
@@ -1137,8 +1137,10 @@
       <th class="sortable" onclick="sortTable('missions','statut')">Statut</th>
       <th style="min-width:140px">Actions</th>
     </tr></thead>
-    <tbody></tbody>
   </table>
+  <div style="max-height:400px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px">
+    <table class="data-table" style="width:100%"><tbody id="tbody-missions"></tbody></table>
+  </div>
 
   </div><!-- /subtab-missions -->
 
@@ -1944,7 +1946,7 @@ function deleteMission(id) {
 }
 
 function renderMissions() {
-  const tbody = document.querySelector('#table-missions tbody');
+  const tbody = document.getElementById('tbody-missions');
   updateSortHeaders('table-missions', 'missions');
 
   // Mettre à jour les filtres
