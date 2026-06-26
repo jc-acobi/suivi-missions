@@ -588,6 +588,32 @@
     .analyse-bar-bg { flex: 1; height: 6px; background: var(--card-alt); border-radius: 3px; overflow: hidden; }
     .analyse-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.4s; }
 
+    /* ── INFOBULLE ── */
+    .stat-chip { position: relative; }
+    .stat-chip[data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0d1526;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 0.8rem;
+      font-weight: 400;
+      padding: 0.5rem 0.85rem;
+      border-radius: 8px;
+      white-space: pre-line;
+      min-width: 160px;
+      max-width: 280px;
+      z-index: 300;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      line-height: 1.6;
+      pointer-events: none;
+    }
+    .stat-chip[data-tooltip] { cursor: default; }
+    .stat-chip[data-tooltip]:hover { border-color: var(--accent); }
+
     /* ── TAG PICKER ── */
     .tag-picker {
       display: flex;
@@ -2150,8 +2176,29 @@ function renderStats() {
   const totalClients  = DB.clients.length;
 
   // Vision année en cours
+  const debutAnnee = annee + '-01-01';
+  const finAnnee   = annee + '-12-31';
   const demarragesAnnee = DB.missions.filter(m => (m.debut || '').startsWith(annee)).length;
   const termineesAnnee  = DB.missions.filter(m => (m.fin || '').startsWith(annee) && m.fin < today).length;
+
+  // Missions actives pendant l'année (démarrées avant fin d'année ET pas terminées avant début d'année)
+  const missionsAnnee = DB.missions.filter(m =>
+    m.debut && m.debut <= finAnnee && (!m.fin || m.fin >= debutAnnee)
+  );
+  const clientsAnneeIds = [...new Set(missionsAnnee.map(m => m.clientId).filter(Boolean))];
+  const nbClientsAnnee  = clientsAnneeIds.length;
+
+  // Nouveaux clients : mission démarrée en année ET aucune mission avant cette année pour ce client
+  const nouveauxClients = clientsAnneeIds.filter(cid => {
+    const aDebutEnAnnee = missionsAnnee.some(m => m.clientId === cid && (m.debut || '').startsWith(annee));
+    if (!aDebutEnAnnee) return false;
+    const avantAnnee = DB.missions.some(m => m.clientId === cid && m.debut && m.debut < debutAnnee);
+    return !avantAnnee;
+  });
+  const nbNouveauxClients = nouveauxClients.length;
+  const tooltipNouveaux = nouveauxClients.length
+    ? nouveauxClients.map(id => { const cl = DB.clients.find(x => x.id === id); return cl ? '· ' + cl.nom : ''; }).filter(Boolean).join('\n')
+    : '';
 
   // Vision à l'instant T
   const enCours       = DB.missions.filter(m => getStatut(m) === 'en_cours').length;
@@ -2168,9 +2215,11 @@ function renderStats() {
     <div style="width:1px;background:var(--border);align-self:stretch;margin:0 0.5rem"></div>
     <div style="display:flex;flex-direction:column;gap:0.4rem">
       <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);font-weight:700;padding-left:0.2rem">Année ${annee}</div>
-      <div style="display:flex;gap:0.8rem">
+      <div style="display:flex;gap:0.8rem;flex-wrap:wrap">
         <div class="stat-chip"><span class="val" style="color:var(--accent2)">${demarragesAnnee}</span><span class="lbl">Démarrages</span></div>
         <div class="stat-chip"><span class="val">${termineesAnnee}</span><span class="lbl">Terminées</span></div>
+        <div class="stat-chip"><span class="val" style="color:var(--warning)">${nbClientsAnnee}</span><span class="lbl">Clients différents</span></div>
+        <div class="stat-chip" ${tooltipNouveaux ? `data-tooltip="Nouveaux clients :\n${tooltipNouveaux}"` : ''}><span class="val" style="color:var(--accent)">${nbNouveauxClients}</span><span class="lbl">Nouveaux clients ${nbNouveauxClients > 0 ? '🛈' : ''}</span></div>
       </div>
     </div>
     <div style="width:1px;background:var(--border);align-self:stretch;margin:0 0.5rem"></div>
