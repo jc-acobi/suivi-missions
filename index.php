@@ -2139,8 +2139,13 @@ function renderCollabView() {
     return true;
   });
 
-  // Trier par date de début décroissante
-  missions = missions.sort((a, b) => (b.debut || '').localeCompare(a.debut || ''));
+  // Trier : en cours en premier, puis terminées ; sous-tri date de début décroissante
+  missions = missions.sort((a, b) => {
+    const sa = getStatut(a) === 'en_cours' ? 0 : 1;
+    const sb = getStatut(b) === 'en_cours' ? 0 : 1;
+    if (sa !== sb) return sa - sb;
+    return (b.debut || '').localeCompare(a.debut || '');
+  });
 
   if (!missions.length) {
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
