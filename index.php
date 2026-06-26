@@ -2185,7 +2185,7 @@ function renderCollabView() {
     }
 
     return `
-    <div class="mission-card" ondblclick="openEditMission('${m.id}')" style="cursor:pointer" title="Double-cliquer pour modifier">
+    <div class="mission-card" onclick="openEditMission('${m.id}')" style="cursor:pointer" title="Cliquer pour modifier">
       <div class="mission-card-header">
         <div class="mission-card-logo">${logoContent}</div>
         <div>
