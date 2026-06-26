@@ -1530,10 +1530,13 @@ function renderClients() {
     return;
   }
   tbody.innerHTML = list.map(c => `
-    <tr onclick="openEditClient('${c.id}')" style="cursor:pointer" title="Cliquer pour modifier">
+    <tr>
       <td>${c.nom}</td>
       <td><span class="logo-mini">${logoHtml(c.logo, 28, c.nom)}</span></td>
-      <td><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteClient('${c.id}')">Supprimer</button></td>
+      <td style="display:flex;gap:0.5rem">
+        <button class="btn btn-primary btn-sm" onclick="openEditClient('${c.id}')">Modifier</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteClient('${c.id}')">Supprimer</button>
+      </td>
     </tr>
   `).join('');
 }
