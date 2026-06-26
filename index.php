@@ -531,6 +531,63 @@
       margin-top: 0.2rem;
     }
 
+    /* ── ANALYSE ── */
+    .analyse-section { margin-bottom: 2rem; }
+    .analyse-section-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    .analyse-stat-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .analyse-stat {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.6rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      min-width: 140px;
+    }
+    .analyse-stat .val { font-size: 2rem; font-weight: 700; color: var(--accent); line-height: 1; }
+    .analyse-stat .val.blue { color: var(--accent2); }
+    .analyse-stat .val.yellow { color: var(--warning); }
+    .analyse-stat .lbl { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; }
+    .analyse-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 900px) { .analyse-grid { grid-template-columns: 1fr; } }
+    .analyse-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.4rem;
+    }
+    .analyse-card-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    .analyse-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.55rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+      gap: 0.5rem;
+    }
+    .analyse-row:last-child { border-bottom: none; }
+    .analyse-row .name { font-weight: 600; }
+    .analyse-row .meta { color: var(--text-muted); font-size: 0.82rem; text-align: right; }
+    .analyse-bar-wrap { display: flex; align-items: center; gap: 0.6rem; min-width: 80px; }
+    .analyse-bar-bg { flex: 1; height: 6px; background: var(--card-alt); border-radius: 3px; overflow: hidden; }
+    .analyse-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.4s; }
+
     /* ── TAG PICKER ── */
     .tag-picker {
       display: flex;
@@ -684,6 +741,7 @@
 <nav class="tabs">
   <button class="tab-btn active" onclick="showTab('visu')">🗂 Visualisation</button>
   <button class="tab-btn" onclick="showTab('collab-view')">👤 Vue Collab</button>
+  <button class="tab-btn" onclick="showTab('analyse')">📊 Analyse</button>
   <button class="tab-btn" onclick="showTab('param')">⚙️ Paramétrage</button>
 </nav>
 
@@ -781,6 +839,34 @@
 
   <div class="grid" id="cv-missions-grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
     <!-- rempli par JS -->
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════
+     ONGLET ANALYSE
+════════════════════════════════════════ -->
+<div id="tab-analyse" class="tab-content">
+
+  <div class="filters" style="align-items:flex-start;margin-bottom:1.5rem">
+    <div class="filter-group">
+      <label>Périmètre Métier</label>
+      <select id="an-perimetre" onchange="renderAnalyse()" style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0.5rem 0.9rem;font-family:'Nunito',sans-serif;font-size:0.9rem;min-width:220px">
+        <option value="">— Tous les périmètres —</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Statut</label>
+      <div class="radio-group">
+        <label class="radio-option"><input type="radio" name="an-statut" value="" checked onchange="renderAnalyse()"><span>Toutes</span></label>
+        <label class="radio-option"><input type="radio" name="an-statut" value="en_cours" onchange="renderAnalyse()"><span>En cours</span></label>
+        <label class="radio-option"><input type="radio" name="an-statut" value="terminee" onchange="renderAnalyse()"><span>Terminées</span></label>
+      </div>
+    </div>
+  </div>
+
+  <div id="analyse-content">
+    <div class="empty-state"><div class="icon">📊</div><p>Sélectionnez un périmètre métier pour afficher l'analyse.</p></div>
   </div>
 
 </div>
@@ -1281,6 +1367,7 @@ function showTab(name) {
   event.target.classList.add('active');
   if (name === 'visu') renderAll();
   if (name === 'collab-view') { refreshSelects(); renderCollabView(); }
+  if (name === 'analyse') { refreshAnalyseSelect(); renderAnalyse(); }
 }
 
 // ══════════════════════════════════════════
@@ -2053,6 +2140,7 @@ function renderAll() {
   renderPerimetres();
   renderMethodes();
   refreshSelects();
+  refreshAnalyseSelect();
   renderStats();
   // Appliquer l'état initial de la vue
   setView(currentView);
@@ -2263,6 +2351,164 @@ function formatDateCourt(d) {
   if (!d) return '';
   const [y, m, day] = d.split('-');
   return `${day}/${m}/${y.slice(2)}`;
+}
+
+// ══════════════════════════════════════════
+//  ANALYSE
+// ══════════════════════════════════════════
+function refreshAnalyseSelect() {
+  const sel = document.getElementById('an-perimetre');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Tous les périmètres —</option>' +
+    [...(DB.perimetres || [])].sort((a,b) => a.nom.localeCompare(b.nom,'fr'))
+      .map(p => `<option value="${p.id}">${p.nom}</option>`).join('');
+  sel.value = prev;
+}
+
+function renderAnalyse() {
+  const perimetreId = document.getElementById('an-perimetre').value;
+  const statutEl   = document.querySelector('input[name="an-statut"]:checked');
+  const fStatut    = statutEl ? statutEl.value : '';
+  const content    = document.getElementById('analyse-content');
+
+  // Filtrer les missions
+  let missions = DB.missions.filter(m => {
+    if (perimetreId && !(m.perimetreIds || []).includes(perimetreId)) return false;
+    if (fStatut && getStatut(m) !== fStatut) return false;
+    return true;
+  });
+
+  if (!missions.length) {
+    const msg = perimetreId
+      ? 'Aucune mission trouvée pour ce périmètre avec ce filtre.'
+      : 'Aucune mission trouvée.';
+    content.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>${msg}</p></div>`;
+    return;
+  }
+
+  const perimetreNom = perimetreId
+    ? (DB.perimetres.find(p => p.id === perimetreId) || {}).nom || ''
+    : 'Tous les périmètres';
+
+  // ── Chiffres clés ──
+  const nbMissions   = missions.length;
+  const nbEncours    = missions.filter(m => getStatut(m) === 'en_cours').length;
+  const nbTerminees  = missions.filter(m => getStatut(m) === 'terminee').length;
+  const clientIds    = [...new Set(missions.map(m => m.clientId).filter(Boolean))];
+  const collabIds    = [...new Set(missions.flatMap(m => m.collabIds || []))];
+
+  // ── Collaborateurs ──
+  const collabStats = collabIds.map(id => {
+    const c = DB.collaborateurs.find(x => x.id === id);
+    if (!c) return null;
+    const ms = missions.filter(m => (m.collabIds || []).includes(id));
+    const dates = ms.map(m => m.debut).filter(Boolean).sort();
+    const fins  = ms.map(m => m.fin).filter(Boolean).sort();
+    const debut = dates[0] ? formatDate(dates[0]) : '—';
+    const fin   = fins[fins.length-1] ? formatDate(fins[fins.length-1]) : 'en cours';
+    return { nom: `${c.prenom} ${c.nom}`, nb: ms.length, debut, fin };
+  }).filter(Boolean).sort((a,b) => b.nb - a.nb);
+  const maxCollabNb = collabStats[0] ? collabStats[0].nb : 1;
+
+  // ── Clients ──
+  const clientStats = clientIds.map(id => {
+    const cl = DB.clients.find(x => x.id === id);
+    if (!cl) return null;
+    const ms = missions.filter(m => m.clientId === id);
+    return { nom: cl.nom, logo: cl.logo, nb: ms.length };
+  }).filter(Boolean).sort((a,b) => b.nb - a.nb);
+  const maxClientNb = clientStats[0] ? clientStats[0].nb : 1;
+
+  // ── Méthodes/Outils les plus utilisés ──
+  const methodeCount = {};
+  missions.forEach(m => (m.methodeIds || []).forEach(id => { methodeCount[id] = (methodeCount[id] || 0) + 1; }));
+  const methodeStats = Object.entries(methodeCount)
+    .map(([id, nb]) => { const mo = DB.methodes.find(x => x.id === id); return mo ? { nom: mo.nom, nb } : null; })
+    .filter(Boolean).sort((a,b) => b.nb - a.nb);
+  const maxMethodeNb = methodeStats[0] ? methodeStats[0].nb : 1;
+
+  // ── Périmètres associés (si vue "tous") ──
+  let perimetresAssocHtml = '';
+  if (!perimetreId) {
+    const pCount = {};
+    missions.forEach(m => (m.perimetreIds || []).forEach(id => { pCount[id] = (pCount[id] || 0) + 1; }));
+    const pStats = Object.entries(pCount)
+      .map(([id, nb]) => { const p = DB.perimetres.find(x => x.id === id); return p ? { nom: p.nom, nb } : null; })
+      .filter(Boolean).sort((a,b) => b.nb - a.nb);
+    const maxP = pStats[0] ? pStats[0].nb : 1;
+    if (pStats.length) {
+      perimetresAssocHtml = `
+      <div class="analyse-card">
+        <div class="analyse-card-title">🎯 Périmètres Métier</div>
+        ${pStats.map(p => `
+          <div class="analyse-row">
+            <span class="name">${p.nom}</span>
+            <div class="analyse-bar-wrap">
+              <div class="analyse-bar-bg"><div class="analyse-bar-fill" style="width:${Math.round(p.nb/maxP*100)}%"></div></div>
+              <span class="meta">${p.nb} mission${p.nb>1?'s':''}</span>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    }
+  }
+
+  content.innerHTML = `
+    <div style="margin-bottom:0.5rem;font-size:1.05rem;font-weight:700;color:var(--text)">${perimetreNom}</div>
+
+    <div class="analyse-stat-row">
+      <div class="analyse-stat"><span class="val">${nbMissions}</span><span class="lbl">Missions</span></div>
+      <div class="analyse-stat"><span class="val blue">${nbEncours}</span><span class="lbl">En cours</span></div>
+      <div class="analyse-stat"><span class="val">${nbTerminees}</span><span class="lbl">Terminées</span></div>
+      <div class="analyse-stat"><span class="val yellow">${clientIds.length}</span><span class="lbl">Clients</span></div>
+      <div class="analyse-stat"><span class="val" style="color:var(--warning)">${collabIds.length}</span><span class="lbl">Collaborateurs</span></div>
+    </div>
+
+    <div class="analyse-grid">
+
+      <div class="analyse-card">
+        <div class="analyse-card-title">👤 Collaborateurs</div>
+        ${collabStats.length ? collabStats.map(c => `
+          <div class="analyse-row">
+            <div>
+              <div class="name">${c.nom}</div>
+              <div class="meta">${c.debut} → ${c.fin}</div>
+            </div>
+            <div class="analyse-bar-wrap">
+              <div class="analyse-bar-bg"><div class="analyse-bar-fill" style="width:${Math.round(c.nb/maxCollabNb*100)}%"></div></div>
+              <span class="meta">${c.nb} mission${c.nb>1?'s':''}</span>
+            </div>
+          </div>`).join('') : '<p style="color:var(--text-muted);font-size:0.85rem">Aucun collaborateur</p>'}
+      </div>
+
+      <div class="analyse-card">
+        <div class="analyse-card-title">🏢 Clients</div>
+        ${clientStats.length ? clientStats.map(cl => `
+          <div class="analyse-row">
+            <span class="name">${cl.nom}</span>
+            <div class="analyse-bar-wrap">
+              <div class="analyse-bar-bg"><div class="analyse-bar-fill" style="width:${Math.round(cl.nb/maxClientNb*100)}%"></div></div>
+              <span class="meta">${cl.nb} mission${cl.nb>1?'s':''}</span>
+            </div>
+          </div>`).join('') : '<p style="color:var(--text-muted);font-size:0.85rem">Aucun client</p>'}
+      </div>
+
+      ${methodeStats.length ? `
+      <div class="analyse-card">
+        <div class="analyse-card-title">🔧 Méthodes / Outils clés</div>
+        ${methodeStats.map(mo => `
+          <div class="analyse-row">
+            <span class="name">${mo.nom}</span>
+            <div class="analyse-bar-wrap">
+              <div class="analyse-bar-bg"><div class="analyse-bar-fill" style="width:${Math.round(mo.nb/maxMethodeNb*100)}%;background:var(--accent2)"></div></div>
+              <span class="meta">${mo.nb} mission${mo.nb>1?'s':''}</span>
+            </div>
+          </div>`).join('')}
+      </div>` : ''}
+
+      ${perimetresAssocHtml}
+
+    </div>`;
 }
 
 // ══════════════════════════════════════════
