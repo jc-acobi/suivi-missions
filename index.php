@@ -3270,9 +3270,9 @@ function renderPerimetres() {
     return `
     <tr>
       <td>${p.nom}</td>
-      <td style="text-align:center;color:var(--text-muted)">${nb || '—'}</td>
-      <td style="text-align:center;color:var(--text-muted)">${collabsPresents || '—'}</td>
-      <td style="display:flex;gap:0.5rem;justify-content:flex-end">
+      <td style="width:90px;text-align:center;color:var(--text-muted)">${nb || '—'}</td>
+      <td style="width:90px;text-align:center;color:var(--text-muted)">${collabsPresents || '—'}</td>
+      <td style="width:140px;display:flex;gap:0.5rem;justify-content:flex-end">
         <button class="btn btn-primary btn-sm" onclick="editPerimetre('${p.id}')">Modifier</button>
         <button class="btn btn-danger btn-sm" onclick="deletePerimetre('${p.id}')">Supprimer</button>
       </td>
@@ -3360,9 +3360,9 @@ function renderMethodes() {
     return `
     <tr>
       <td>${m.nom}</td>
-      <td style="text-align:center;color:var(--text-muted)">${nb || '—'}</td>
-      <td style="text-align:center;color:var(--text-muted)">${collabsPresents || '—'}</td>
-      <td style="display:flex;gap:0.5rem;justify-content:flex-end">
+      <td style="width:90px;text-align:center;color:var(--text-muted)">${nb || '—'}</td>
+      <td style="width:90px;text-align:center;color:var(--text-muted)">${collabsPresents || '—'}</td>
+      <td style="width:140px;display:flex;gap:0.5rem;justify-content:flex-end">
         <button class="btn btn-primary btn-sm" onclick="editMethode('${m.id}')">Modifier</button>
         <button class="btn btn-danger btn-sm" onclick="deleteMethode('${m.id}')">Supprimer</button>
       </td>
