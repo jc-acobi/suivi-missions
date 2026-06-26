@@ -1750,7 +1750,9 @@ function getSelectedAnnees() {
 function filterFCCopiloteDD() {
   const search = (document.getElementById('fc-copilote-search').value || '').toLowerCase();
   const dd = document.getElementById('fc-copilote-dd');
+  const copiloteIds = new Set(DB.collaborateurs.map(c => c.copilote).filter(Boolean));
   const matches = DB.collaborateurs
+    .filter(c => copiloteIds.has(c.id))
     .filter(c => !search || c.prenom.toLowerCase().includes(search) || c.nom.toLowerCase().includes(search) || (c.prenom + ' ' + c.nom).toLowerCase().includes(search))
     .sort((a, b) => a.prenom.localeCompare(b.prenom, 'fr'));
   dd.innerHTML = matches.length
