@@ -1259,7 +1259,8 @@
         <table class="data-table" style="width:100%">
           <thead><tr>
             <th>Valeur</th>
-            <th style="width:80px;text-align:center">Missions</th>
+            <th style="width:90px;text-align:center">Nb Missions</th>
+            <th style="width:90px;text-align:center">Nb Collabs</th>
             <th style="width:140px">Actions</th>
           </tr></thead>
         </table>
@@ -1288,7 +1289,8 @@
         <table class="data-table" style="width:100%">
           <thead><tr>
             <th>Valeur</th>
-            <th style="width:80px;text-align:center">Missions</th>
+            <th style="width:90px;text-align:center">Nb Missions</th>
+            <th style="width:90px;text-align:center">Nb Collabs</th>
             <th style="width:140px">Actions</th>
           </tr></thead>
         </table>
@@ -3252,15 +3254,24 @@ function renderPerimetres() {
   const tbody = document.getElementById('tbody-perimetres');
   const list = [...(DB.perimetres || [])].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted);text-align:center;padding:1.5rem">Aucune valeur</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);text-align:center;padding:1.5rem">Aucune valeur</td></tr>';
     return;
   }
+  const today = new Date().toISOString().split('T')[0];
   tbody.innerHTML = list.map(p => {
-    const nb = DB.missions.filter(m => (m.perimetreIds || []).includes(p.id)).length;
+    const missionsAvec = DB.missions.filter(m => (m.perimetreIds || []).includes(p.id));
+    const nb = missionsAvec.length;
+    const collabsPresents = new Set(
+      missionsAvec.flatMap(m => m.collabIds || []).filter(id => {
+        const c = DB.collaborateurs.find(x => x.id === id);
+        return c && c.dateEntree && c.dateEntree <= today && (!c.dateSortie || c.dateSortie > today);
+      })
+    ).size;
     return `
     <tr>
       <td>${p.nom}</td>
       <td style="text-align:center;color:var(--text-muted)">${nb || '—'}</td>
+      <td style="text-align:center;color:var(--text-muted)">${collabsPresents || '—'}</td>
       <td style="display:flex;gap:0.5rem;justify-content:flex-end">
         <button class="btn btn-primary btn-sm" onclick="editPerimetre('${p.id}')">Modifier</button>
         <button class="btn btn-danger btn-sm" onclick="deletePerimetre('${p.id}')">Supprimer</button>
@@ -3333,15 +3344,24 @@ function renderMethodes() {
   const tbody = document.getElementById('tbody-methodes');
   const list = [...(DB.methodes || [])].sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="3" style="color:var(--text-muted);text-align:center;padding:1.5rem">Aucune valeur</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-muted);text-align:center;padding:1.5rem">Aucune valeur</td></tr>';
     return;
   }
+  const today = new Date().toISOString().split('T')[0];
   tbody.innerHTML = list.map(m => {
-    const nb = DB.missions.filter(x => (x.methodeIds || []).includes(m.id)).length;
+    const missionsAvec = DB.missions.filter(x => (x.methodeIds || []).includes(m.id));
+    const nb = missionsAvec.length;
+    const collabsPresents = new Set(
+      missionsAvec.flatMap(x => x.collabIds || []).filter(id => {
+        const c = DB.collaborateurs.find(x => x.id === id);
+        return c && c.dateEntree && c.dateEntree <= today && (!c.dateSortie || c.dateSortie > today);
+      })
+    ).size;
     return `
     <tr>
       <td>${m.nom}</td>
       <td style="text-align:center;color:var(--text-muted)">${nb || '—'}</td>
+      <td style="text-align:center;color:var(--text-muted)">${collabsPresents || '—'}</td>
       <td style="display:flex;gap:0.5rem;justify-content:flex-end">
         <button class="btn btn-primary btn-sm" onclick="editMethode('${m.id}')">Modifier</button>
         <button class="btn btn-danger btn-sm" onclick="deleteMethode('${m.id}')">Supprimer</button>
