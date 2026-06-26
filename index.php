@@ -559,6 +559,34 @@
       color: var(--accent);
     }
     .tag-pick-empty { font-size: 0.82rem; color: var(--text-muted); font-style: italic; }
+    .tag-pick-add {
+      border-style: dashed;
+      color: var(--accent);
+      border-color: var(--accent);
+      background: transparent;
+      padding: 0.28rem 0.7rem;
+      font-size: 1rem;
+      line-height: 1;
+    }
+    .tag-pick-add:hover { background: rgba(93,216,184,0.1); }
+    .tag-add-form {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .tag-add-input {
+      background: var(--card-alt);
+      border: 1px solid var(--accent);
+      border-radius: 20px;
+      color: var(--text);
+      padding: 0.22rem 0.75rem;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.82rem;
+      outline: none;
+      width: 160px;
+    }
+    .tag-pick-confirm { border-color: var(--accent); color: var(--accent); background: rgba(93,216,184,0.15); }
+    .tag-pick-cancel  { border-color: var(--danger);  color: var(--danger);  background: rgba(255,107,107,0.1); }
 
     /* ── IMPORT EXCEL ── */
     .import-zone {
@@ -1623,8 +1651,8 @@ function refreshSelects() {
   fCollab.value = fCollab2;
 
   // Tag pickers du formulaire d'ajout de mission
-  renderTagPicker('m-perimetres', DB.perimetres, []);
-  renderTagPicker('m-methodes',   DB.methodes,   []);
+  renderTagPicker('m-perimetres', DB.perimetres, [], 'perimetre');
+  renderTagPicker('m-methodes',   DB.methodes,   [], 'methode');
 }
 
 function importClients(input) {
@@ -1700,8 +1728,8 @@ function addMission(data = null) {
     document.getElementById('m-debut').value = '';
     document.getElementById('m-fin').value = '';
     document.getElementById('m-details').value = '';
-    renderTagPicker('m-perimetres', DB.perimetres, []);
-    renderTagPicker('m-methodes',   DB.methodes,   []);
+    renderTagPicker('m-perimetres', DB.perimetres, [], 'perimetre');
+    renderTagPicker('m-methodes',   DB.methodes,   [], 'methode');
   }
   renderMissions();
   toast('Mission ajoutée ✓');
@@ -1729,8 +1757,8 @@ function openEditMission(id) {
   document.getElementById('edit-collab-search').value = firstCollab ? firstCollab.prenom + ' ' + firstCollab.nom : '';
 
   // Pré-remplir les tags
-  renderTagPicker('edit-perimetres', DB.perimetres, m.perimetreIds || []);
-  renderTagPicker('edit-methodes',   DB.methodes,   m.methodeIds   || []);
+  renderTagPicker('edit-perimetres', DB.perimetres, m.perimetreIds || [], 'perimetre');
+  renderTagPicker('edit-methodes',   DB.methodes,   m.methodeIds   || [], 'methode');
 
   document.getElementById('modal-edit').classList.add('open');
 }
@@ -2240,21 +2268,54 @@ function formatDateCourt(d) {
 // ══════════════════════════════════════════
 //  TAG PICKER
 // ══════════════════════════════════════════
-function renderTagPicker(containerId, items, selectedIds) {
+function renderTagPicker(containerId, items, selectedIds, addType) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  if (!items || !items.length) {
-    container.innerHTML = '<span class="tag-pick-empty">Aucune valeur — ajoutez-en dans Paramétrage &gt; Périmètre Missions</span>';
-    return;
-  }
   const sel = selectedIds || [];
-  container.innerHTML = items
-    .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
-    .map(item => `<span class="tag-pick${sel.includes(item.id) ? ' selected' : ''}" data-id="${item.id}" onclick="this.classList.toggle('selected')">${item.nom}</span>`)
-    .join('');
+  let html = (items && items.length)
+    ? items.sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
+        .map(item => `<span class="tag-pick${sel.includes(item.id) ? ' selected' : ''}" data-id="${item.id}" onclick="this.classList.toggle('selected')">${item.nom}</span>`)
+        .join('')
+    : '<span class="tag-pick-empty">Aucune valeur —</span>';
+  if (addType) {
+    html += `<span class="tag-pick tag-pick-add" onclick="showTagAdd('${containerId}','${addType}')" title="Ajouter une valeur">＋</span>`;
+  }
+  container.innerHTML = html;
 }
 function getSelectedTags(containerId) {
   return [...document.querySelectorAll(`#${containerId} .tag-pick.selected`)].map(el => el.dataset.id);
+}
+function showTagAdd(containerId, type) {
+  const container = document.getElementById(containerId);
+  const existing = container.querySelector('.tag-add-form');
+  if (existing) { existing.remove(); return; }
+  const form = document.createElement('span');
+  form.className = 'tag-add-form';
+  form.innerHTML = `
+    <input class="tag-add-input" type="text" placeholder="Nouvelle valeur…"
+      onkeydown="if(event.key==='Enter'){event.preventDefault();confirmTagAdd('${containerId}','${type}',this)}
+                 if(event.key==='Escape')this.closest('.tag-add-form').remove()">
+    <span class="tag-pick tag-pick-confirm" onmousedown="confirmTagAdd('${containerId}','${type}',this.previousElementSibling)">✓</span>
+    <span class="tag-pick tag-pick-cancel"  onmousedown="this.closest('.tag-add-form').remove()">✕</span>`;
+  container.appendChild(form);
+  form.querySelector('input').focus();
+}
+function confirmTagAdd(containerId, type, inputEl) {
+  const nom = (inputEl.value || '').trim();
+  if (!nom) { inputEl.focus(); return; }
+  const list = type === 'perimetre' ? DB.perimetres : DB.methodes;
+  const newItem = { id: uid(), nom };
+  list.push(newItem);
+  save();
+  if (type === 'perimetre') renderPerimetres(); else renderMethodes();
+  // Rafraîchir les deux tag pickers du même type en conservant la sélection
+  ['m-', 'edit-'].forEach(prefix => {
+    const cid = prefix + (type === 'perimetre' ? 'perimetres' : 'methodes');
+    const sel = getSelectedTags(cid);
+    if (cid === containerId) sel.push(newItem.id);
+    renderTagPicker(cid, list, sel, type);
+  });
+  toast(`"${nom}" ajouté ✓`);
 }
 
 // ══════════════════════════════════════════
