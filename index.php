@@ -1248,6 +1248,50 @@
 </div>
 
 <!-- MODAL MODIFICATION MISSION -->
+<!-- MODAL MODIFICATION COLLABORATEUR -->
+<div class="modal-overlay" id="modal-edit-collab">
+  <div class="modal">
+    <h3 id="modal-collab-title">✏️ Modifier le collaborateur</h3>
+    <input type="hidden" id="mc-id">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nom</label>
+        <input type="text" id="mc-nom">
+      </div>
+      <div class="form-group">
+        <label>Prénom</label>
+        <input type="text" id="mc-prenom">
+      </div>
+      <div class="form-group">
+        <label>Sexe</label>
+        <select id="mc-sexe">
+          <option value="">-- Sélectionner --</option>
+          <option value="Masculin">Masculin</option>
+          <option value="Féminin">Féminin</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date d'entrée</label>
+        <input type="date" id="mc-date-entree">
+      </div>
+      <div class="form-group">
+        <label>Date de sortie</label>
+        <input type="date" id="mc-date-sortie">
+      </div>
+      <div class="form-group">
+        <label>Co-pilote</label>
+        <select id="mc-copilote"></select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeEditCollabModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="saveEditCollaborateur()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-edit">
   <div class="modal">
     <h3>✏️ Modifier la mission</h3>
@@ -1496,18 +1540,48 @@ function resetCollaborateurForm() {
 
 function editCollaborateur(id) {
   const c = DB.collaborateurs.find(x => x.id === id);
-  refreshCopiloteSelect(id);
-  document.getElementById('c-edit-id').value = id;
-  document.getElementById('c-nom').value = c.nom;
-  document.getElementById('c-prenom').value = c.prenom;
-  document.getElementById('c-sexe').value = c.sexe || '';
-  document.getElementById('c-date-entree').value = c.dateEntree || '';
-  document.getElementById('c-date-sortie').value = c.dateSortie || '';
-  document.getElementById('c-copilote').value = c.copilote || '';
-  document.getElementById('c-form-title').textContent = `Modifier ${c.prenom} ${c.nom}`;
-  document.getElementById('c-submit-btn').textContent = 'Enregistrer';
-  document.getElementById('c-cancel-btn').style.display = 'inline-block';
-  document.getElementById('c-form-title').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (!c) return;
+  document.getElementById('mc-id').value          = id;
+  document.getElementById('mc-nom').value         = c.nom;
+  document.getElementById('mc-prenom').value      = c.prenom;
+  document.getElementById('mc-sexe').value        = c.sexe || '';
+  document.getElementById('mc-date-entree').value = c.dateEntree || '';
+  document.getElementById('mc-date-sortie').value = c.dateSortie || '';
+  document.getElementById('modal-collab-title').textContent = `✏️ Modifier ${c.prenom} ${c.nom}`;
+  // Remplir le select co-pilote en excluant le collaborateur lui-même
+  const today = new Date().toISOString().split('T')[0];
+  const mcCopilote = document.getElementById('mc-copilote');
+  mcCopilote.innerHTML = '<option value="">-- Aucun --</option>' +
+    DB.collaborateurs
+      .filter(x => x.id !== id)
+      .filter(x => !x.dateSortie || x.dateSortie >= today)
+      .sort((a, b) => a.prenom.localeCompare(b.prenom, 'fr'))
+      .map(x => `<option value="${x.id}" ${x.id === c.copilote ? 'selected' : ''}>${x.prenom} ${x.nom}</option>`)
+      .join('');
+  document.getElementById('modal-edit-collab').classList.add('open');
+}
+
+function closeEditCollabModal() {
+  document.getElementById('modal-edit-collab').classList.remove('open');
+}
+
+function saveEditCollaborateur() {
+  const id         = document.getElementById('mc-id').value;
+  const nom        = document.getElementById('mc-nom').value.trim();
+  const prenom     = document.getElementById('mc-prenom').value.trim();
+  const sexe       = document.getElementById('mc-sexe').value;
+  const dateEntree = document.getElementById('mc-date-entree').value;
+  const dateSortie = document.getElementById('mc-date-sortie').value;
+  const copilote   = document.getElementById('mc-copilote').value;
+  if (!nom || !prenom) { toast('Nom et prénom requis', 'error'); return; }
+  const c = DB.collaborateurs.find(x => x.id === id);
+  if (!c) return;
+  Object.assign(c, { nom, prenom, sexe, dateEntree, dateSortie, copilote });
+  save();
+  closeEditCollabModal();
+  renderCollaborateurs();
+  refreshSelects();
+  toast('Collaborateur modifié ✓');
 }
 
 function cancelEditCollaborateur() {
