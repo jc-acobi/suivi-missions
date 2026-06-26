@@ -1259,10 +1259,10 @@
         <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
           <table class="data-table" style="width:100%;table-layout:fixed">
             <colgroup>
-              <col>
-              <col style="width:100px">
-              <col style="width:100px">
-              <col style="width:150px">
+              <col style="width:40%">
+              <col style="width:90px">
+              <col style="width:90px">
+              <col style="width:160px">
             </colgroup>
             <thead><tr>
               <th>Valeur</th>
@@ -1305,10 +1305,10 @@
         <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
           <table class="data-table" style="width:100%;table-layout:fixed">
             <colgroup>
-              <col>
-              <col style="width:100px">
-              <col style="width:100px">
-              <col style="width:150px">
+              <col style="width:40%">
+              <col style="width:90px">
+              <col style="width:90px">
+              <col style="width:160px">
             </colgroup>
             <thead><tr>
               <th>Valeur</th>
