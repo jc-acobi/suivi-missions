@@ -1237,56 +1237,64 @@
   <!-- SOUS-ONGLET PÉRIMÈTRE MISSIONS -->
   <div id="subtab-perimetre" class="subtab-content">
 
-    <!-- PÉRIMÈTRE MÉTIER -->
-    <div class="section-title">🎯 Périmètre Métier</div>
-    <div class="form-card">
-      <h3 id="pm-form-title">Ajouter une valeur</h3>
-      <input type="hidden" id="pm-edit-id">
-      <div class="form-row">
-        <div class="form-group" style="flex:1">
-          <label>Valeur</label>
-          <input type="text" id="pm-nom" placeholder="ex. Finance, RH, Supply Chain…">
-        </div>
-      </div>
-      <div style="display:flex;gap:0.75rem">
-        <button class="btn btn-primary" id="pm-submit-btn" onclick="savePerimetre()">Ajouter</button>
-        <button class="btn" id="pm-cancel-btn" style="display:none;background:var(--card-alt);color:var(--text)" onclick="cancelEditPerimetre()">Annuler</button>
-      </div>
-    </div>
-    <table class="data-table" style="width:100%">
-      <thead><tr>
-        <th>Valeur</th>
-        <th style="width:140px">Actions</th>
-      </tr></thead>
-    </table>
-    <div style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px">
-      <table class="data-table" style="width:100%"><tbody id="tbody-perimetres"></tbody></table>
-    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
 
-    <!-- MÉTHODES / OUTILS CLÉS -->
-    <div class="section-title" style="margin-top:2.5rem">🔧 Méthodes / Outils clés</div>
-    <div class="form-card">
-      <h3 id="mo-form-title">Ajouter une valeur</h3>
-      <input type="hidden" id="mo-edit-id">
-      <div class="form-row">
-        <div class="form-group" style="flex:1">
-          <label>Valeur</label>
-          <input type="text" id="mo-nom" placeholder="ex. Agile, Lean, SAP, Power BI…">
+      <!-- PÉRIMÈTRE MÉTIER -->
+      <div>
+        <div class="section-title">🎯 Périmètre Métier</div>
+        <div class="form-card">
+          <h3 id="pm-form-title">Ajouter une valeur</h3>
+          <input type="hidden" id="pm-edit-id">
+          <div class="form-row">
+            <div class="form-group" style="flex:1">
+              <label>Valeur</label>
+              <input type="text" id="pm-nom" placeholder="ex. Finance, RH, Supply Chain…">
+            </div>
+          </div>
+          <div style="display:flex;gap:0.75rem">
+            <button class="btn btn-primary" id="pm-submit-btn" onclick="savePerimetre()">Ajouter</button>
+            <button class="btn" id="pm-cancel-btn" style="display:none;background:var(--card-alt);color:var(--text)" onclick="cancelEditPerimetre()">Annuler</button>
+          </div>
+        </div>
+        <table class="data-table" style="width:100%">
+          <thead><tr>
+            <th>Valeur</th>
+            <th style="width:140px">Actions</th>
+          </tr></thead>
+        </table>
+        <div style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px">
+          <table class="data-table" style="width:100%"><tbody id="tbody-perimetres"></tbody></table>
         </div>
       </div>
-      <div style="display:flex;gap:0.75rem">
-        <button class="btn btn-primary" id="mo-submit-btn" onclick="saveMethode()">Ajouter</button>
-        <button class="btn" id="mo-cancel-btn" style="display:none;background:var(--card-alt);color:var(--text)" onclick="cancelEditMethode()">Annuler</button>
+
+      <!-- MÉTHODES / OUTILS CLÉS -->
+      <div>
+        <div class="section-title">🔧 Méthodes / Outils clés</div>
+        <div class="form-card">
+          <h3 id="mo-form-title">Ajouter une valeur</h3>
+          <input type="hidden" id="mo-edit-id">
+          <div class="form-row">
+            <div class="form-group" style="flex:1">
+              <label>Valeur</label>
+              <input type="text" id="mo-nom" placeholder="ex. Agile, Lean, SAP, Power BI…">
+            </div>
+          </div>
+          <div style="display:flex;gap:0.75rem">
+            <button class="btn btn-primary" id="mo-submit-btn" onclick="saveMethode()">Ajouter</button>
+            <button class="btn" id="mo-cancel-btn" style="display:none;background:var(--card-alt);color:var(--text)" onclick="cancelEditMethode()">Annuler</button>
+          </div>
+        </div>
+        <table class="data-table" style="width:100%">
+          <thead><tr>
+            <th>Valeur</th>
+            <th style="width:140px">Actions</th>
+          </tr></thead>
+        </table>
+        <div style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px">
+          <table class="data-table" style="width:100%"><tbody id="tbody-methodes"></tbody></table>
+        </div>
       </div>
-    </div>
-    <table class="data-table" style="width:100%">
-      <thead><tr>
-        <th>Valeur</th>
-        <th style="width:140px">Actions</th>
-      </tr></thead>
-    </table>
-    <div style="max-height:260px;overflow-y:auto;border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px">
-      <table class="data-table" style="width:100%"><tbody id="tbody-methodes"></tbody></table>
+
     </div>
 
   </div><!-- /subtab-perimetre -->
