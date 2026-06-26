@@ -593,9 +593,9 @@
     .stat-chip[data-tooltip]:hover::after {
       content: attr(data-tooltip);
       position: absolute;
-      bottom: calc(100% + 8px);
-      left: 50%;
-      transform: translateX(-50%);
+      top: calc(100% + 8px);
+      left: 0;
+      transform: none;
       background: #0d1526;
       border: 1px solid var(--border);
       color: var(--text);
@@ -604,11 +604,11 @@
       padding: 0.5rem 0.85rem;
       border-radius: 8px;
       white-space: pre-line;
-      min-width: 160px;
-      max-width: 280px;
+      min-width: 320px;
+      max-width: 480px;
       z-index: 300;
       box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-      line-height: 1.6;
+      line-height: 1.8;
       pointer-events: none;
     }
     .stat-chip[data-tooltip] { cursor: default; }
