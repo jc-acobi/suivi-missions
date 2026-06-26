@@ -893,6 +893,16 @@
       </div>
     </div>
     <div class="filter-group">
+      <label>Co-pilote</label>
+      <div style="position:relative;min-width:320px">
+        <input type="text" id="cv-copilote-search" placeholder="Rechercher un co-pilote…" autocomplete="off"
+          oninput="filterCVCopiloteDD()" onfocus="showCVCopiloteDD()" onblur="hideCVCopiloteDD()"
+          style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0.5rem 0.9rem;font-family:'Nunito',sans-serif;font-size:0.9rem;width:100%">
+        <input type="hidden" id="cv-copilote-id">
+        <div id="cv-copilote-dd" class="collab-dropdown"></div>
+      </div>
+    </div>
+    <div class="filter-group">
       <label>Statut</label>
       <div class="radio-group">
         <label class="radio-option">
@@ -3259,14 +3269,45 @@ function selectCVCollab(id, label) {
   renderCollabView();
 }
 
+function filterCVCopiloteDD() {
+  const search = (document.getElementById('cv-copilote-search').value || '').toLowerCase();
+  const dd = document.getElementById('cv-copilote-dd');
+  const matches = DB.collaborateurs
+    .filter(c => !search || c.prenom.toLowerCase().includes(search) || c.nom.toLowerCase().includes(search) || (c.prenom + ' ' + c.nom).toLowerCase().includes(search))
+    .sort((a, b) => a.prenom.localeCompare(b.prenom, 'fr'));
+  dd.innerHTML = matches.length
+    ? matches.map(c => `<div class="collab-dd-item" onmousedown="selectCVCopilote('${c.id}','${c.prenom} ${c.nom}')">${c.prenom} ${c.nom}</div>`).join('')
+    : '<div style="padding:0.5rem 0.9rem;color:var(--text-muted);font-size:0.85rem">Aucun résultat</div>';
+  dd.style.display = 'block';
+}
+function showCVCopiloteDD() { filterCVCopiloteDD(); }
+function hideCVCopiloteDD() {
+  setTimeout(() => { const dd = document.getElementById('cv-copilote-dd'); if (dd) dd.style.display = 'none'; }, 200);
+}
+function selectCVCopilote(id, label) {
+  document.getElementById('cv-copilote-id').value = id;
+  document.getElementById('cv-copilote-search').value = label;
+  document.getElementById('cv-copilote-dd').style.display = 'none';
+  renderCollabView();
+}
+
 function renderCollabView() {
   const collabId = document.getElementById('cv-collab-id').value;
+  const copiloteId = document.getElementById('cv-copilote-id').value;
   const statutEl = document.querySelector('input[name="cv-statut"]:checked');
   const fStatut = statutEl ? statutEl.value : 'en_cours';
   const grid = document.getElementById('cv-missions-grid');
 
   let missions = DB.missions.filter(m => {
     if (collabId && !(m.collabIds || []).includes(collabId)) return false;
+    if (copiloteId) {
+      // Garder uniquement les missions où au moins un des collabs a ce co-pilote
+      const hasMatchingCopilote = (m.collabIds || []).some(cid => {
+        const c = DB.collaborateurs.find(x => x.id === cid);
+        return c && c.copilote === copiloteId;
+      });
+      if (!hasMatchingCopilote) return false;
+    }
     if (fStatut && getStatut(m) !== fStatut) return false;
     return true;
   });
@@ -3288,7 +3329,7 @@ function renderCollabView() {
   if (!missions.length) {
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
       <div class="icon">🔍</div>
-      <p>${collabId ? 'Aucune mission trouvée pour ce collaborateur.' : 'Sélectionnez un collaborateur ou choisissez un filtre de statut.'}</p>
+      <p>${collabId || copiloteId ? 'Aucune mission trouvée pour ces critères.' : 'Sélectionnez un collaborateur ou un co-pilote, ou choisissez un filtre de statut.'}</p>
     </div>`;
     return;
   }
