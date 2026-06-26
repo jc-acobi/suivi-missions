@@ -1304,6 +1304,25 @@
 <!-- TOAST -->
 <div id="toast"></div>
 
+<!-- MODAL ÉDITION VALEUR PÉRIMÈTRE / MÉTHODE -->
+<div class="modal-overlay" id="modal-edit-valeur">
+  <div class="modal">
+    <h3 id="modal-valeur-title">✏️ Modifier la valeur</h3>
+    <input type="hidden" id="mv-id">
+    <input type="hidden" id="mv-type">
+    <div class="form-row">
+      <div class="form-group" style="flex:1">
+        <label id="mv-label">Libellé</label>
+        <input type="text" id="mv-nom" onkeydown="if(event.key==='Enter')saveEditValeur()">
+      </div>
+    </div>
+    <div style="display:flex;gap:0.75rem;justify-content:flex-end;margin-top:0.5rem">
+      <button class="btn" onclick="closeEditValeur()" style="background:var(--card-alt);color:var(--text)">Annuler</button>
+      <button class="btn btn-primary" onclick="saveEditValeur()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CONFIRMATION SUPPRESSION -->
 <div class="modal-overlay" id="modal-confirm">
   <div class="modal">
@@ -3196,11 +3215,12 @@ function resetPerimetreForm() {
 }
 function editPerimetre(id) {
   const p = DB.perimetres.find(x => x.id === id);
-  document.getElementById('pm-edit-id').value = id;
-  document.getElementById('pm-nom').value = p.nom;
-  document.getElementById('pm-form-title').textContent = 'Modifier la valeur';
-  document.getElementById('pm-submit-btn').textContent = 'Enregistrer';
-  document.getElementById('pm-cancel-btn').style.display = 'inline-block';
+  document.getElementById('mv-id').value = id;
+  document.getElementById('mv-type').value = 'perimetre';
+  document.getElementById('mv-nom').value = p.nom;
+  document.getElementById('modal-valeur-title').textContent = '✏️ Modifier — Périmètre Métier';
+  document.getElementById('modal-edit-valeur').classList.add('open');
+  setTimeout(() => document.getElementById('mv-nom').focus(), 50);
 }
 function cancelEditPerimetre() { resetPerimetreForm(); }
 function deletePerimetre(id) {
@@ -3255,13 +3275,31 @@ function resetMethodeForm() {
 }
 function editMethode(id) {
   const m = DB.methodes.find(x => x.id === id);
-  document.getElementById('mo-edit-id').value = id;
-  document.getElementById('mo-nom').value = m.nom;
-  document.getElementById('mo-form-title').textContent = 'Modifier la valeur';
-  document.getElementById('mo-submit-btn').textContent = 'Enregistrer';
-  document.getElementById('mo-cancel-btn').style.display = 'inline-block';
+  document.getElementById('mv-id').value = id;
+  document.getElementById('mv-type').value = 'methode';
+  document.getElementById('mv-nom').value = m.nom;
+  document.getElementById('modal-valeur-title').textContent = '✏️ Modifier — Méthode / Outil';
+  document.getElementById('modal-edit-valeur').classList.add('open');
+  setTimeout(() => document.getElementById('mv-nom').focus(), 50);
 }
 function cancelEditMethode() { resetMethodeForm(); }
+function closeEditValeur() { document.getElementById('modal-edit-valeur').classList.remove('open'); }
+function saveEditValeur() {
+  const id   = document.getElementById('mv-id').value;
+  const type = document.getElementById('mv-type').value;
+  const nom  = document.getElementById('mv-nom').value.trim();
+  if (!nom) { toast('Libellé requis', 'error'); return; }
+  if (type === 'perimetre') {
+    const p = DB.perimetres.find(x => x.id === id);
+    if (p) p.nom = nom;
+    save(); renderPerimetres(); toast('Périmètre modifié ✓');
+  } else {
+    const m = DB.methodes.find(x => x.id === id);
+    if (m) m.nom = nom;
+    save(); renderMethodes(); toast('Méthode modifiée ✓');
+  }
+  closeEditValeur();
+}
 function deleteMethode(id) {
   const m = DB.methodes.find(x => x.id === id);
   openModal(`Supprimer "${m.nom}" ?`, () => {
