@@ -2596,13 +2596,7 @@ function renderAnalyse() {
   content.innerHTML = `
     <div style="margin-bottom:0.5rem;font-size:1.05rem;font-weight:700;color:var(--text)">${perimetreNom}</div>
 
-    <div class="analyse-stat-row">
-      <div class="analyse-stat"><span class="val">${nbMissions}</span><span class="lbl">Missions</span></div>
-      <div class="analyse-stat"><span class="val blue">${nbEncours}</span><span class="lbl">En cours</span></div>
-      <div class="analyse-stat"><span class="val">${nbTerminees}</span><span class="lbl">Terminées</span></div>
-      <div class="analyse-stat"><span class="val yellow">${clientIds.length}</span><span class="lbl">Clients</span></div>
-      <div class="analyse-stat"><span class="val" style="color:var(--warning)">${collabIds.length}</span><span class="lbl">Collaborateurs</span></div>
-    </div>
+    ${buildAnalyseStatsHtml(missions)}
 
     <div class="analyse-grid">
 
@@ -2649,6 +2643,51 @@ function renderAnalyse() {
       ${perimetresAssocHtml}
 
     </div>`;
+}
+
+function buildAnalyseStatsHtml(missions) {
+  const today = new Date().toISOString().split('T')[0];
+  // Vision globale
+  const nbTotal     = missions.length;
+  const nbTerminees = missions.filter(m => getStatut(m) === 'terminee').length;
+  const nbClients   = new Set(missions.map(m => m.clientId).filter(Boolean)).size;
+  const nbCollabs   = new Set(missions.flatMap(m => m.collabIds || [])).size;
+  // À l'instant T
+  const nbEnCours   = missions.filter(m => getStatut(m) === 'en_cours').length;
+  const collabsActifs = new Set(
+    missions
+      .filter(m => getStatut(m) === 'en_cours')
+      .flatMap(m => m.collabIds || [])
+      .filter(id => {
+        const c = DB.collaborateurs.find(x => x.id === id);
+        return c && (!c.dateSortie || c.dateSortie >= today);
+      })
+  ).size;
+
+  const chip = (val, lbl, color) =>
+    `<div class="stat-chip"><span class="val" style="color:${color||'var(--accent)'}">${val}</span><span class="lbl">${lbl}</span></div>`;
+  const sep = `<div style="width:1px;background:var(--border);align-self:stretch;margin:0 0.5rem"></div>`;
+  const grpLabel = txt => `<div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);font-weight:700;padding-left:0.2rem">${txt}</div>`;
+
+  return `<div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-start;margin-bottom:2rem">
+    <div style="display:flex;flex-direction:column;gap:0.4rem">
+      ${grpLabel('Vision globale')}
+      <div style="display:flex;gap:0.8rem;flex-wrap:wrap">
+        ${chip(nbTotal,     'Missions totales')}
+        ${chip(nbTerminees, 'Terminées')}
+        ${chip(nbClients,   'Clients',       'var(--warning)')}
+        ${chip(nbCollabs,   'Collaborateurs','var(--warning)')}
+      </div>
+    </div>
+    ${sep}
+    <div style="display:flex;flex-direction:column;gap:0.4rem">
+      ${grpLabel('À l\'instant T')}
+      <div style="display:flex;gap:0.8rem;flex-wrap:wrap">
+        ${chip(nbEnCours,     'Missions en cours', 'var(--accent2)')}
+        ${chip(collabsActifs, 'Collabs dans les effectifs')}
+      </div>
+    </div>
+  </div>`;
 }
 
 // ──────────────────────────────────────────
@@ -2722,12 +2761,7 @@ function renderAnalyseMethodes() {
   content.innerHTML = `
     <div style="margin-bottom:0.5rem;font-size:1.05rem;font-weight:700;color:var(--text)">${selNoms.join(', ')}</div>
 
-    <div class="analyse-stat-row">
-      <div class="analyse-stat"><span class="val">${missions.length}</span><span class="lbl">Missions</span></div>
-      <div class="analyse-stat"><span class="val blue">${nbEncours}</span><span class="lbl">En cours</span></div>
-      <div class="analyse-stat"><span class="val">${nbTerminees}</span><span class="lbl">Terminées</span></div>
-      <div class="analyse-stat"><span class="val yellow">${clientIds.length}</span><span class="lbl">Clients</span></div>
-      <div class="analyse-stat"><span class="val" style="color:var(--warning)">${collabIds.length}</span><span class="lbl">Collaborateurs</span></div>
+    ${buildAnalyseStatsHtml(missions)}
     </div>
 
     <div class="analyse-grid">
