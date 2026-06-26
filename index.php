@@ -849,12 +849,31 @@
 <div id="tab-analyse" class="tab-content">
 
   <div class="filters" style="align-items:flex-start;margin-bottom:1.5rem">
+
+    <!-- Toggle vue -->
     <div class="filter-group">
+      <label>Afficher</label>
+      <div class="view-toggle">
+        <button class="view-btn active" id="an-btn-perimetre" onclick="setAnalyseView('perimetre')">Par Périmètre Métier</button>
+        <button class="view-btn" id="an-btn-methode" onclick="setAnalyseView('methode')">Par Méthode / Outil</button>
+      </div>
+    </div>
+
+    <!-- Filtre Périmètre Métier (vue 1) -->
+    <div class="filter-group" id="an-filter-perimetre">
       <label>Périmètre Métier</label>
       <select id="an-perimetre" onchange="renderAnalyse()" style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0.5rem 0.9rem;font-family:'Nunito',sans-serif;font-size:0.9rem;min-width:220px">
         <option value="">— Tous les périmètres —</option>
       </select>
     </div>
+
+    <!-- Filtre Méthodes / Outils (vue 2) -->
+    <div class="filter-group" id="an-filter-methode" style="display:none">
+      <label>Méthodes / Outils clés <span style="color:var(--text-muted);font-weight:400;font-size:0.78rem">(sélectionner une ou plusieurs)</span></label>
+      <div class="tag-picker" id="an-methodes-picker" style="max-width:700px"></div>
+    </div>
+
+    <!-- Filtre statut (commun) -->
     <div class="filter-group">
       <label>Statut</label>
       <div class="radio-group">
@@ -863,6 +882,7 @@
         <label class="radio-option"><input type="radio" name="an-statut" value="terminee" onchange="renderAnalyse()"><span>Terminées</span></label>
       </div>
     </div>
+
   </div>
 
   <div id="analyse-content">
@@ -1367,7 +1387,7 @@ function showTab(name) {
   event.target.classList.add('active');
   if (name === 'visu') renderAll();
   if (name === 'collab-view') { refreshSelects(); renderCollabView(); }
-  if (name === 'analyse') { refreshAnalyseSelect(); renderAnalyse(); }
+  if (name === 'analyse') { refreshAnalyseSelect(); if (analyseView === 'methode') refreshAnalyseMethodesPicker(); renderAnalyse(); }
 }
 
 // ══════════════════════════════════════════
@@ -2356,6 +2376,18 @@ function formatDateCourt(d) {
 // ══════════════════════════════════════════
 //  ANALYSE
 // ══════════════════════════════════════════
+let analyseView = 'perimetre';
+
+function setAnalyseView(view) {
+  analyseView = view;
+  document.getElementById('an-btn-perimetre').classList.toggle('active', view === 'perimetre');
+  document.getElementById('an-btn-methode').classList.toggle('active', view === 'methode');
+  document.getElementById('an-filter-perimetre').style.display = view === 'perimetre' ? '' : 'none';
+  document.getElementById('an-filter-methode').style.display   = view === 'methode'   ? '' : 'none';
+  if (view === 'methode') refreshAnalyseMethodesPicker();
+  renderAnalyse();
+}
+
 function refreshAnalyseSelect() {
   const sel = document.getElementById('an-perimetre');
   if (!sel) return;
@@ -2366,7 +2398,23 @@ function refreshAnalyseSelect() {
   sel.value = prev;
 }
 
+function refreshAnalyseMethodesPicker() {
+  const container = document.getElementById('an-methodes-picker');
+  if (!container) return;
+  const sel = getSelectedTags('an-methodes-picker');
+  const items = [...(DB.methodes || [])].sort((a,b) => a.nom.localeCompare(b.nom,'fr'));
+  if (!items.length) {
+    container.innerHTML = '<span class="tag-pick-empty">Aucune méthode disponible — ajoutez-en dans Paramétrage.</span>';
+    return;
+  }
+  container.innerHTML = items.map(item =>
+    `<span class="tag-pick${sel.includes(item.id) ? ' selected' : ''}" data-id="${item.id}" onclick="this.classList.toggle('selected');renderAnalyse()">${item.nom}</span>`
+  ).join('');
+}
+
 function renderAnalyse() {
+  if (analyseView === 'methode') { renderAnalyseMethodes(); return; }
+
   const perimetreId = document.getElementById('an-perimetre').value;
   const statutEl   = document.querySelector('input[name="an-statut"]:checked');
   const fStatut    = statutEl ? statutEl.value : '';
@@ -2507,6 +2555,150 @@ function renderAnalyse() {
       </div>` : ''}
 
       ${perimetresAssocHtml}
+
+    </div>`;
+}
+
+// ──────────────────────────────────────────
+function renderAnalyseMethodes() {
+  const content  = document.getElementById('analyse-content');
+  const statutEl = document.querySelector('input[name="an-statut"]:checked');
+  const fStatut  = statutEl ? statutEl.value : '';
+  const selIds   = getSelectedTags('an-methodes-picker');
+
+  if (!selIds.length) {
+    content.innerHTML = `<div class="empty-state"><div class="icon">🔧</div><p>Sélectionnez une ou plusieurs méthodes / outils pour afficher l'analyse.</p></div>`;
+    return;
+  }
+
+  // Missions ayant au moins une des méthodes sélectionnées
+  let missions = DB.missions.filter(m => {
+    if (fStatut && getStatut(m) !== fStatut) return false;
+    return (m.methodeIds || []).some(id => selIds.includes(id));
+  });
+
+  const selNoms = selIds.map(id => { const mo = DB.methodes.find(x => x.id === id); return mo ? mo.nom : ''; }).filter(Boolean);
+
+  if (!missions.length) {
+    content.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>Aucune mission trouvée pour cette sélection.</p></div>`;
+    return;
+  }
+
+  // Chiffres clés
+  const nbEncours   = missions.filter(m => getStatut(m) === 'en_cours').length;
+  const nbTerminees = missions.filter(m => getStatut(m) === 'terminee').length;
+  const clientIds   = [...new Set(missions.map(m => m.clientId).filter(Boolean))];
+  const collabIds   = [...new Set(missions.flatMap(m => m.collabIds || []))];
+
+  // Collaborateurs
+  const collabStats = collabIds.map(id => {
+    const c = DB.collaborateurs.find(x => x.id === id);
+    if (!c) return null;
+    const ms = missions.filter(m => (m.collabIds || []).includes(id));
+    const dates = ms.map(m => m.debut).filter(Boolean).sort();
+    const fins  = ms.map(m => m.fin).filter(Boolean).sort();
+    return { nom: `${c.prenom} ${c.nom}`, nb: ms.length,
+      debut: dates[0] ? formatDate(dates[0]) : '—',
+      fin: fins[fins.length-1] ? formatDate(fins[fins.length-1]) : 'en cours' };
+  }).filter(Boolean).sort((a,b) => b.nb - a.nb);
+  const maxC = collabStats[0] ? collabStats[0].nb : 1;
+
+  // Clients
+  const clientStats = clientIds.map(id => {
+    const cl = DB.clients.find(x => x.id === id);
+    if (!cl) return null;
+    return { nom: cl.nom, nb: missions.filter(m => m.clientId === id).length };
+  }).filter(Boolean).sort((a,b) => b.nb - a.nb);
+  const maxCl = clientStats[0] ? clientStats[0].nb : 1;
+
+  // Périmètres associés
+  const pCount = {};
+  missions.forEach(m => (m.perimetreIds || []).forEach(id => { pCount[id] = (pCount[id]||0)+1; }));
+  const pStats = Object.entries(pCount)
+    .map(([id,nb]) => { const p = DB.perimetres.find(x => x.id === id); return p ? {nom:p.nom,nb} : null; })
+    .filter(Boolean).sort((a,b) => b.nb - a.nb);
+  const maxP = pStats[0] ? pStats[0].nb : 1;
+
+  // Liste des missions
+  const missionsSorted = [...missions].sort((a,b) => {
+    const sa = getStatut(a) === 'en_cours' ? 0 : 1;
+    const sb = getStatut(b) === 'en_cours' ? 0 : 1;
+    if (sa !== sb) return sa - sb;
+    return (b.debut||'').localeCompare(a.debut||'');
+  });
+
+  content.innerHTML = `
+    <div style="margin-bottom:0.5rem;font-size:1.05rem;font-weight:700;color:var(--text)">${selNoms.join(', ')}</div>
+
+    <div class="analyse-stat-row">
+      <div class="analyse-stat"><span class="val">${missions.length}</span><span class="lbl">Missions</span></div>
+      <div class="analyse-stat"><span class="val blue">${nbEncours}</span><span class="lbl">En cours</span></div>
+      <div class="analyse-stat"><span class="val">${nbTerminees}</span><span class="lbl">Terminées</span></div>
+      <div class="analyse-stat"><span class="val yellow">${clientIds.length}</span><span class="lbl">Clients</span></div>
+      <div class="analyse-stat"><span class="val" style="color:var(--warning)">${collabIds.length}</span><span class="lbl">Collaborateurs</span></div>
+    </div>
+
+    <div class="analyse-grid">
+
+      <div class="analyse-card">
+        <div class="analyse-card-title">👤 Collaborateurs</div>
+        ${collabStats.map(c => `
+          <div class="analyse-row">
+            <div><div class="name">${c.nom}</div><div class="meta">${c.debut} → ${c.fin}</div></div>
+            <div class="analyse-bar-wrap">
+              <div class="analyse-bar-bg"><div class="analyse-bar-fill" style="width:${Math.round(c.nb/maxC*100)}%"></div></div>
+              <span class="meta">${c.nb} mission${c.nb>1?'s':''}</span>
+            </div>
+          </div>`).join('')}
+      </div>
+
+      <div class="analyse-card">
+        <div class="analyse-card-title">🏢 Clients</div>
+        ${clientStats.map(cl => `
+          <div class="analyse-row">
+            <span class="name">${cl.nom}</span>
+            <div class="analyse-bar-wrap">
+              <div class="analyse-bar-bg"><div class="analyse-bar-fill" style="width:${Math.round(cl.nb/maxCl*100)}%"></div></div>
+              <span class="meta">${cl.nb} mission${cl.nb>1?'s':''}</span>
+            </div>
+          </div>`).join('')}
+      </div>
+
+      ${pStats.length ? `
+      <div class="analyse-card">
+        <div class="analyse-card-title">🎯 Périmètres Métier associés</div>
+        ${pStats.map(p => `
+          <div class="analyse-row">
+            <span class="name">${p.nom}</span>
+            <div class="analyse-bar-wrap">
+              <div class="analyse-bar-bg"><div class="analyse-bar-fill" style="width:${Math.round(p.nb/maxP*100)}%;background:var(--accent2)"></div></div>
+              <span class="meta">${p.nb} mission${p.nb>1?'s':''}</span>
+            </div>
+          </div>`).join('')}
+      </div>` : ''}
+
+      <div class="analyse-card" style="grid-column:1/-1">
+        <div class="analyse-card-title">📋 Missions concernées</div>
+        ${missionsSorted.map(m => {
+          const cl = DB.clients.find(x => x.id === m.clientId);
+          const collabs = (m.collabIds||[]).map(id => { const c = DB.collaborateurs.find(x=>x.id===id); return c ? c.prenom+' '+c.nom : ''; }).filter(Boolean).join(', ');
+          const statut = getStatut(m);
+          const badgeCls = statut === 'en_cours' ? 'badge-encours' : 'badge-terminee';
+          const badgeLbl = statut === 'en_cours' ? 'En cours' : 'Terminée';
+          const periode = [m.debut, m.fin].filter(Boolean).map(d => formatDate(d)).join(' → ');
+          return `
+          <div class="analyse-row" style="flex-wrap:wrap;gap:0.3rem 1rem">
+            <div style="flex:1;min-width:200px">
+              <div class="name">${m.titre || '—'} ${cl ? `<span style="color:var(--accent);font-weight:400">· ${cl.nom}</span>` : ''}</div>
+              ${collabs ? `<div class="meta">👤 ${collabs}</div>` : ''}
+            </div>
+            <div style="display:flex;gap:0.5rem;align-items:center">
+              ${periode ? `<span class="meta">📅 ${periode}</span>` : ''}
+              <span class="badge ${badgeCls}" style="margin:0">${badgeLbl}</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
 
     </div>`;
 }
