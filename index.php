@@ -1256,33 +1256,21 @@
             <button class="btn" id="pm-cancel-btn" style="display:none;background:var(--card-alt);color:var(--text)" onclick="cancelEditPerimetre()">Annuler</button>
           </div>
         </div>
-        <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
-          <table class="data-table" style="width:100%;table-layout:fixed">
-            <colgroup>
-              <col style="width:40%">
-              <col style="width:90px">
-              <col style="width:90px">
-              <col style="width:160px">
-            </colgroup>
-            <thead><tr>
-              <th>Valeur</th>
-              <th style="text-align:center">Nb Missions</th>
-              <th style="text-align:center">Nb Collabs</th>
-              <th style="text-align:right">Actions</th>
-            </tr></thead>
-          </table>
-          <div style="max-height:260px;overflow-y:auto">
-            <table class="data-table" style="width:100%;table-layout:fixed">
-              <colgroup>
-                <col>
-                <col style="width:100px">
-                <col style="width:100px">
-                <col style="width:150px">
-              </colgroup>
-              <tbody id="tbody-perimetres"></tbody>
-            </table>
-          </div>
-        </div>
+        <table class="data-table" style="width:100%;table-layout:fixed">
+          <colgroup>
+            <col>
+            <col style="width:100px">
+            <col style="width:100px">
+            <col style="width:170px">
+          </colgroup>
+          <thead><tr>
+            <th>Valeur</th>
+            <th style="text-align:center">Nb Missions</th>
+            <th style="text-align:center">Nb Collabs</th>
+            <th style="text-align:right">Actions</th>
+          </tr></thead>
+          <tbody id="tbody-perimetres" style="display:block;max-height:260px;overflow-y:auto;width:100%"></tbody>
+        </table>
       </div>
 
       <!-- MÉTHODES / OUTILS CLÉS -->
@@ -1302,33 +1290,21 @@
             <button class="btn" id="mo-cancel-btn" style="display:none;background:var(--card-alt);color:var(--text)" onclick="cancelEditMethode()">Annuler</button>
           </div>
         </div>
-        <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
-          <table class="data-table" style="width:100%;table-layout:fixed">
-            <colgroup>
-              <col style="width:40%">
-              <col style="width:90px">
-              <col style="width:90px">
-              <col style="width:160px">
-            </colgroup>
-            <thead><tr>
-              <th>Valeur</th>
-              <th style="text-align:center">Nb Missions</th>
-              <th style="text-align:center">Nb Collabs</th>
-              <th style="text-align:right">Actions</th>
-            </tr></thead>
-          </table>
-          <div style="max-height:260px;overflow-y:auto">
-            <table class="data-table" style="width:100%;table-layout:fixed">
-              <colgroup>
-                <col>
-                <col style="width:100px">
-                <col style="width:100px">
-                <col style="width:150px">
-              </colgroup>
-              <tbody id="tbody-methodes"></tbody>
-            </table>
-          </div>
-        </div>
+        <table class="data-table" style="width:100%;table-layout:fixed">
+          <colgroup>
+            <col>
+            <col style="width:100px">
+            <col style="width:100px">
+            <col style="width:170px">
+          </colgroup>
+          <thead><tr>
+            <th>Valeur</th>
+            <th style="text-align:center">Nb Missions</th>
+            <th style="text-align:center">Nb Collabs</th>
+            <th style="text-align:right">Actions</th>
+          </tr></thead>
+          <tbody id="tbody-methodes" style="display:block;max-height:260px;overflow-y:auto;width:100%"></tbody>
+        </table>
       </div>
 
     </div>
@@ -3300,11 +3276,11 @@ function renderPerimetres() {
       })
     ).size;
     return `
-    <tr>
+    <tr style="display:table;width:100%;table-layout:fixed">
       <td>${p.nom}</td>
-      <td style="text-align:center;color:var(--text-muted)">${nb || '—'}</td>
-      <td style="text-align:center;color:var(--text-muted)">${collabsPresents || '—'}</td>
-      <td style="text-align:right">
+      <td style="width:100px;text-align:center;color:var(--text-muted)">${nb || '—'}</td>
+      <td style="width:100px;text-align:center;color:var(--text-muted)">${collabsPresents || '—'}</td>
+      <td style="width:170px;text-align:right">
         <div style="display:inline-flex;gap:0.5rem">
           <button class="btn btn-primary btn-sm" onclick="editPerimetre('${p.id}')">Modifier</button>
           <button class="btn btn-danger btn-sm" onclick="deletePerimetre('${p.id}')">Supprimer</button>
@@ -3392,11 +3368,11 @@ function renderMethodes() {
       })
     ).size;
     return `
-    <tr>
+    <tr style="display:table;width:100%;table-layout:fixed">
       <td>${m.nom}</td>
-      <td style="text-align:center;color:var(--text-muted)">${nb || '—'}</td>
-      <td style="text-align:center;color:var(--text-muted)">${collabsPresents || '—'}</td>
-      <td style="text-align:right">
+      <td style="width:100px;text-align:center;color:var(--text-muted)">${nb || '—'}</td>
+      <td style="width:100px;text-align:center;color:var(--text-muted)">${collabsPresents || '—'}</td>
+      <td style="width:170px;text-align:right">
         <div style="display:inline-flex;gap:0.5rem">
           <button class="btn btn-primary btn-sm" onclick="editMethode('${m.id}')">Modifier</button>
           <button class="btn btn-danger btn-sm" onclick="deleteMethode('${m.id}')">Supprimer</button>
