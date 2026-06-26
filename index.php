@@ -2469,6 +2469,13 @@ function renderCollabView() {
       <span class="badge ${badgeCls}" style="align-self:flex-start">${badgeLbl}</span>
       ${collabs ? `<div class="mission-card-field">👤 <strong>${collabs}</strong></div>` : ''}
       ${periode ? `<div class="mission-card-field">📅 <strong>${periode}</strong></div>` : ''}
+      ${(()=>{
+        const tags = [
+          ...(m.perimetreIds||[]).map(id => { const p = DB.perimetres.find(x=>x.id===id); return p ? `<span class="tag-pick selected" style="pointer-events:none">${p.nom}</span>` : ''; }),
+          ...(m.methodeIds||[]).map(id => { const p = DB.methodes.find(x=>x.id===id); return p ? `<span class="tag-pick selected" style="pointer-events:none;background:rgba(74,200,255,0.15);border-color:var(--accent2);color:var(--accent2)">${p.nom}</span>` : ''; })
+        ].filter(Boolean);
+        return tags.length ? `<div class="tag-picker" style="margin-top:0.2rem">${tags.join('')}</div>` : '';
+      })()}
       ${m.details ? `<div class="mission-card-details">${m.details}</div>` : ''}
     </div>`;
   }).join('');
