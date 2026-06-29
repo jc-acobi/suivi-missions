@@ -2601,8 +2601,8 @@ function renderStats() {
     <div style="display:flex;flex-direction:column;gap:0.4rem">
       <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);font-weight:700;padding-left:0.2rem">Vision globale</div>
       <div style="display:flex;gap:0.8rem">
-        <div class="stat-chip"><span class="val">${totalMissions}</span><span class="lbl">Missions totales</span></div>
-        <div class="stat-chip"><span class="val" style="color:var(--warning)">${totalClients}</span><span class="lbl">Clients total</span></div>
+        <div class="stat-chip"><span class="val">${totalMissions}</span><span class="lbl">Missions</span></div>
+        <div class="stat-chip"><span class="val" style="color:var(--warning)">${totalClients}</span><span class="lbl">Clients</span></div>
       </div>
     </div>
     <div style="width:1px;background:var(--border);align-self:stretch;margin:0 0.5rem"></div>
