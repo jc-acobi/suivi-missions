@@ -808,7 +808,7 @@
       flex-direction: column;
       gap: 0.2rem;
       position: relative;
-      min-height: 88px;
+      height: 100px;
       justify-content: center;
     }
     .stat-chip .val { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
