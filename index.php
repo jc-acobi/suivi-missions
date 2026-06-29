@@ -3677,162 +3677,163 @@ function renderCollabView() {
 //  EXPORT PPT
 // ══════════════════════════════════════════
 async function exportPPT() {
-  // Charger PptxGenJS si pas encore fait
-  if (!window.PptxGenJS) {
-    await new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
-      s.onload = resolve; s.onerror = reject;
-      document.head.appendChild(s);
-    });
-  }
-
-  const missions = getFilteredMissions();
-  if (!missions.length) { alert('Aucune mission à exporter.'); return; }
-
-  // Regrouper par client (même logique que renderByClient)
-  const byClient = {};
-  missions.forEach(m => {
-    const cid = m.clientId || '__sans__';
-    if (!byClient[cid]) byClient[cid] = [];
-    byClient[cid].push(m);
-  });
-  const clientIds = Object.keys(byClient).sort((a, b) => {
-    const ca = DB.clients.find(x => x.id === a);
-    const cb = DB.clients.find(x => x.id === b);
-    return (ca ? ca.nom : '').localeCompare(cb ? cb.nom : '', 'fr');
-  });
-
-  // Helper : convertir une image (URL ou base64) en dataURL PNG via canvas
-  async function toDataUrl(src) {
-    return new Promise(resolve => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        const c = document.createElement('canvas');
-        c.width = img.naturalWidth; c.height = img.naturalHeight;
-        c.getContext('2d').drawImage(img, 0, 0);
-        try { resolve(c.toDataURL('image/png')); } catch { resolve(null); }
-      };
-      img.onerror = () => resolve(null);
-      img.src = src;
-    });
-  }
-
-  const pptx = new PptxGenJS();
-  pptx.layout = 'LAYOUT_WIDE'; // 33.86 x 19.05 cm
-  const slideW = 33.86, slideH = 19.05;
-  const slide = pptx.addSlide();
-
-  // Fond sombre
-  slide.background = { color: '1a1a2e' };
-
-  // Titre
-  slide.addText('Missions — Vue clients', {
-    x: 0.5, y: 0.3, w: slideW - 1, h: 0.7,
-    fontSize: 20, bold: true, color: 'ffffff', fontFace: 'Calibri'
-  });
-
-  // Grille : 4 colonnes
-  const COLS = 4;
-  const marginX = 0.5, marginY = 1.2;
-  const gap = 0.3;
-  const cardW = (slideW - marginX * 2 - gap * (COLS - 1)) / COLS;
-  const cardH = 3.8;
-
-  for (let i = 0; i < clientIds.length; i++) {
-    const cid = clientIds[i];
-    const client = DB.clients.find(x => x.id === cid);
-    const clientMissions = byClient[cid];
-
-    const col = i % COLS;
-    const row = Math.floor(i / COLS);
-    const x = marginX + col * (cardW + gap);
-    const y = marginY + row * (cardH + gap);
-
-    // Fond de la carte (blanc cassé)
-    slide.addShape(pptx.ShapeType.rect, {
-      x, y, w: cardW, h: cardH,
-      fill: { color: 'f0f4f8' }, line: { color: 'cccccc', width: 0.5 }, rectRadius: 0.15
-    });
-
-    // Logo
-    let logoY = y + 0.2;
-    const logoSize = 1.0;
-    let logoPlaced = false;
-    if (client && client.logo) {
-      const dataUrl = await toDataUrl(client.logo);
-      if (dataUrl) {
-        slide.addImage({
-          data: dataUrl,
-          x: x + (cardW - logoSize) / 2, y: logoY,
-          w: logoSize, h: logoSize, sizing: { type: 'contain', w: logoSize, h: logoSize }
-        });
-        logoPlaced = true;
-      }
+  try {
+    // Charger PptxGenJS si pas encore fait
+    if (!window.PptxGenJS) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
     }
-    if (!logoPlaced) {
-      // Initiales dans un carré coloré
-      const initiales = (client ? client.nom : '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+    const missions = getFilteredMissions();
+    if (!missions.length) { alert('Aucune mission à exporter.'); return; }
+
+    // Regrouper par client
+    const byClient = {};
+    missions.forEach(m => {
+      const cid = m.clientId || '__sans__';
+      if (!byClient[cid]) byClient[cid] = [];
+      byClient[cid].push(m);
+    });
+    const clientIds = Object.keys(byClient).sort((a, b) => {
+      const ca = DB.clients.find(x => x.id === a);
+      const cb = DB.clients.find(x => x.id === b);
+      return (ca ? ca.nom : '').localeCompare(cb ? cb.nom : '', 'fr');
+    });
+
+    // Convertir logo en dataURL PNG via canvas
+    async function toDataUrl(src) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = img.naturalWidth || 100; c.height = img.naturalHeight || 100;
+          c.getContext('2d').drawImage(img, 0, 0);
+          try { resolve(c.toDataURL('image/png')); } catch(e) { resolve(null); }
+        };
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    }
+
+    const pptx = new PptxGenJS();
+    pptx.layout = 'LAYOUT_WIDE'; // 13.33 x 7.5 pouces
+    const slideW = 13.33, slideH = 7.5;
+    const slide = pptx.addSlide();
+    slide.background = { color: '1a1a2e' };
+
+    // Titre
+    slide.addText('Missions — Vue clients', {
+      x: 0.3, y: 0.15, w: slideW - 0.6, h: 0.45,
+      fontSize: 18, bold: true, color: 'ffffff', fontFace: 'Calibri'
+    });
+
+    // Grille 4 colonnes, en pouces
+    const COLS = 4;
+    const marginX = 0.3, marginY = 0.75;
+    const gap = 0.15;
+    const cardW = (slideW - marginX * 2 - gap * (COLS - 1)) / COLS;
+    const cardH = 1.7;
+
+    for (let i = 0; i < clientIds.length; i++) {
+      const cid = clientIds[i];
+      const client = DB.clients.find(x => x.id === cid);
+      const clientMissions = byClient[cid];
+
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+      const x = marginX + col * (cardW + gap);
+      const y = marginY + row * (cardH + gap);
+
+      // Fond de carte
       slide.addShape(pptx.ShapeType.rect, {
-        x: x + (cardW - logoSize) / 2, y: logoY, w: logoSize, h: logoSize,
-        fill: { color: '4a90d9' }, rectRadius: 0.1
+        x, y, w: cardW, h: cardH,
+        fill: { color: 'f0f4f8' },
+        line: { color: 'cccccc', width: 0.5 }
       });
-      slide.addText(initiales, {
-        x: x + (cardW - logoSize) / 2, y: logoY, w: logoSize, h: logoSize,
-        fontSize: 18, bold: true, color: 'ffffff', align: 'center', valign: 'middle', fontFace: 'Calibri'
-      });
-    }
 
-    // Nom du client
-    const nomClient = client ? client.nom : 'Sans client';
-    slide.addText(nomClient, {
-      x: x + 0.1, y: logoY + logoSize + 0.1, w: cardW - 0.2, h: 0.45,
-      fontSize: 10, bold: true, color: '1a1a2e', align: 'center', fontFace: 'Calibri'
-    });
-
-    // Liste des collabs
-    const collabMap = {};
-    clientMissions.forEach(m => {
-      const terminee = getStatut(m) === 'terminee';
-      (m.collabIds || []).forEach(id => {
-        if (!collabMap[id]) {
-          collabMap[id] = { debut: m.debut, fin: m.fin, toutTerminee: terminee };
-        } else {
-          if (m.debut && (!collabMap[id].debut || m.debut < collabMap[id].debut)) collabMap[id].debut = m.debut;
-          if (m.fin  && (!collabMap[id].fin  || m.fin  > collabMap[id].fin))  collabMap[id].fin  = m.fin;
-          if (!terminee) collabMap[id].toutTerminee = false;
+      // Logo ou initiales
+      const logoSize = 0.55;
+      const logoX = x + (cardW - logoSize) / 2;
+      const logoY = y + 0.1;
+      let logoPlaced = false;
+      if (client && client.logo) {
+        const dataUrl = await toDataUrl(client.logo);
+        if (dataUrl) {
+          slide.addImage({ data: dataUrl, x: logoX, y: logoY, w: logoSize, h: logoSize,
+            sizing: { type: 'contain', w: logoSize, h: logoSize } });
+          logoPlaced = true;
         }
-      });
-    });
-
-    const collabLines = Object.entries(collabMap).map(([id, info]) => {
-      const c = DB.collaborateurs.find(x => x.id === id);
-      if (!c) return null;
-      let dateStr = '';
-      if (info.toutTerminee && info.debut && info.fin) {
-        dateStr = ` ${formatDateCourt(info.debut)} - ${formatDateCourt(info.fin)}`;
-      } else if (info.debut) {
-        dateStr = ` ${formatDateCourt(info.debut)}`;
       }
-      return { text: `${c.prenom} ${c.nom}`, options: { bold: true } },
-             { text: dateStr + '\n', options: { bold: false } };
-    }).filter(Boolean).flat();
+      if (!logoPlaced) {
+        const initiales = (client ? client.nom : '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+        slide.addShape(pptx.ShapeType.rect, {
+          x: logoX, y: logoY, w: logoSize, h: logoSize,
+          fill: { color: '4a90d9' }, line: { color: '4a90d9', width: 0 }
+        });
+        slide.addText(initiales, {
+          x: logoX, y: logoY, w: logoSize, h: logoSize,
+          fontSize: 13, bold: true, color: 'ffffff', align: 'center', valign: 'middle', fontFace: 'Calibri'
+        });
+      }
 
-    if (collabLines.length) {
-      slide.addText(collabLines, {
-        x: x + 0.15, y: logoY + logoSize + 0.65, w: cardW - 0.3, h: cardH - logoSize - 0.85,
-        fontSize: 7.5, color: '333333', fontFace: 'Calibri', valign: 'top'
+      // Nom client
+      slide.addText(client ? client.nom : 'Sans client', {
+        x: x + 0.05, y: logoY + logoSize + 0.05, w: cardW - 0.1, h: 0.22,
+        fontSize: 8, bold: true, color: '1a1a2e', align: 'center', fontFace: 'Calibri'
       });
-    }
-  }
 
-  // Télécharger
-  const today = new Date();
-  const dd = String(today.getDate()).padStart(2, '0');
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const yyyy = today.getFullYear();
-  pptx.writeFile({ fileName: `missions_${dd}-${mm}-${yyyy}.pptx` });
+      // Collabs
+      const collabMap = {};
+      clientMissions.forEach(m => {
+        const terminee = getStatut(m) === 'terminee';
+        (m.collabIds || []).forEach(id => {
+          if (!collabMap[id]) {
+            collabMap[id] = { debut: m.debut, fin: m.fin, toutTerminee: terminee };
+          } else {
+            if (m.debut && (!collabMap[id].debut || m.debut < collabMap[id].debut)) collabMap[id].debut = m.debut;
+            if (m.fin  && (!collabMap[id].fin  || m.fin  > collabMap[id].fin))  collabMap[id].fin  = m.fin;
+            if (!terminee) collabMap[id].toutTerminee = false;
+          }
+        });
+      });
+
+      const collabLines = [];
+      Object.entries(collabMap).forEach(([id, info]) => {
+        const c = DB.collaborateurs.find(x => x.id === id);
+        if (!c) return;
+        let dateStr = '';
+        if (info.toutTerminee && info.debut && info.fin) {
+          dateStr = ` ${formatDateCourt(info.debut)}-${formatDateCourt(info.fin)}`;
+        } else if (info.debut) {
+          dateStr = ` ${formatDateCourt(info.debut)}`;
+        }
+        collabLines.push({ text: `${c.prenom} ${c.nom}`, options: { bold: true, color: '1a1a2e' } });
+        collabLines.push({ text: dateStr + '\n', options: { bold: false, color: '555555' } });
+      });
+
+      if (collabLines.length) {
+        slide.addText(collabLines, {
+          x: x + 0.08, y: logoY + logoSize + 0.3, w: cardW - 0.16, h: cardH - logoSize - 0.45,
+          fontSize: 6.5, fontFace: 'Calibri', valign: 'top'
+        });
+      }
+    }
+
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    await pptx.writeFile({ fileName: `missions_${dd}-${mm}-${yyyy}.pptx` });
+
+  } catch(err) {
+    console.error('Export PPT error:', err);
+    alert('Erreur lors de l\'export : ' + err.message);
+  }
 }
 
 // ══════════════════════════════════════════
