@@ -808,8 +808,6 @@
       flex-direction: column;
       gap: 0.2rem;
       position: relative;
-      min-height: 72px;
-      justify-content: center;
     }
     .stat-chip .val { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
     .stat-chip .lbl { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; }
@@ -2602,7 +2600,7 @@ function renderStats() {
   document.getElementById('stats-row').innerHTML = `
     <div style="display:flex;flex-direction:column;gap:0.4rem">
       <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);font-weight:700;padding-left:0.2rem">Vision globale</div>
-      <div style="display:flex;gap:0.8rem">
+      <div style="display:flex;gap:0.8rem;align-items:stretch">
         <div class="stat-chip"><span class="val">${totalMissions}</span><span class="lbl">Missions</span></div>
         <div class="stat-chip"><span class="val" style="color:var(--warning)">${totalClients}</span><span class="lbl">Clients</span></div>
       </div>
@@ -2610,7 +2608,7 @@ function renderStats() {
     <div style="width:1px;background:var(--border);align-self:stretch;margin:0 0.5rem"></div>
     <div style="display:flex;flex-direction:column;gap:0.4rem">
       <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);font-weight:700;padding-left:0.2rem">Année ${annee}</div>
-      <div style="display:flex;gap:0.8rem">
+      <div style="display:flex;gap:0.8rem;align-items:stretch">
         <div class="stat-chip" ${tooltipDemarrages ? `data-tooltip="${tooltipDemarrages.replace(/"/g,'&quot;')}"` : ''}><span class="val" style="color:var(--accent2)">${demarragesAnnee}</span><span class="lbl">Démarrages</span></div>
         <div class="stat-chip" ${tooltipTerminees ? `data-tooltip="${tooltipTerminees.replace(/"/g,'&quot;')}"` : ''}><span class="val">${termineesAnnee}</span><span class="lbl">Terminées</span></div>
         <div class="stat-chip"><span class="val" style="color:var(--warning)">${nbClientsAnnee}</span><span class="lbl">Clients différents</span></div>
@@ -2620,7 +2618,7 @@ function renderStats() {
     <div style="width:1px;background:var(--border);align-self:stretch;margin:0 0.5rem"></div>
     <div style="display:flex;flex-direction:column;gap:0.4rem">
       <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);font-weight:700;padding-left:0.2rem">À l'instant T</div>
-      <div style="display:flex;gap:0.8rem">
+      <div style="display:flex;gap:0.8rem;align-items:stretch">
         <div class="stat-chip"><span class="val" style="color:var(--accent)">${enCours}</span><span class="lbl">Missions en cours</span></div>
         <div class="stat-chip"><span class="val" style="color:var(--accent)">${clientsActifs}</span><span class="lbl">Clients actifs</span></div>
         <div class="stat-chip"><span class="val" style="color:var(--warning)">${collabsPresents}</span><span class="lbl">Collaborateurs</span></div>
