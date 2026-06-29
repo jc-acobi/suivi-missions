@@ -808,6 +808,8 @@
       flex-direction: column;
       gap: 0.2rem;
       position: relative;
+      min-height: 88px;
+      justify-content: center;
     }
     .stat-chip .val { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
     .stat-chip .lbl { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; }
