@@ -3682,7 +3682,7 @@ async function exportPPT() {
     if (!window.PptxGenJS) {
       await new Promise((resolve, reject) => {
         const s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
+        s.src = 'pptxgen.bundle.js';
         s.onload = resolve; s.onerror = reject;
         document.head.appendChild(s);
       });
