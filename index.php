@@ -3704,7 +3704,7 @@ async function exportPPT() {
       return (ca ? ca.nom : '').localeCompare(cb ? cb.nom : '', 'fr');
     });
 
-    // Convertir logo en dataURL PNG via canvas
+    // Convertir logo en dataURL PNG + dimensions réelles
     async function toDataUrl(src) {
       return new Promise(resolve => {
         const img = new Image();
@@ -3713,7 +3713,8 @@ async function exportPPT() {
           const c = document.createElement('canvas');
           c.width = img.naturalWidth || 100; c.height = img.naturalHeight || 100;
           c.getContext('2d').drawImage(img, 0, 0);
-          try { resolve(c.toDataURL('image/png')); } catch(e) { resolve(null); }
+          try { resolve({ data: c.toDataURL('image/png'), w: img.naturalWidth || 100, h: img.naturalHeight || 100 }); }
+          catch(e) { resolve(null); }
         };
         img.onerror = () => resolve(null);
         img.src = src;
@@ -3762,9 +3763,16 @@ async function exportPPT() {
       const logoY = y + 0.1;
       let logoPlaced = false;
       if (client && client.logo) {
-        const dataUrl = await toDataUrl(client.logo);
-        if (dataUrl) {
-          slide.addImage({ data: dataUrl, x: logoX, y: logoY, w: logoSize, h: logoSize });
+        const result = await toDataUrl(client.logo);
+        if (result) {
+          // Conserver le ratio : tenir dans logoSize x logoSize
+          const ratio = result.w / result.h;
+          let iw, ih;
+          if (ratio >= 1) { iw = logoSize; ih = logoSize / ratio; }
+          else             { ih = logoSize; iw = logoSize * ratio; }
+          const ix = x + (cardW - iw) / 2;
+          const iy = logoY + (logoSize - ih) / 2;
+          slide.addImage({ data: result.data, x: ix, y: iy, w: iw, h: ih });
           logoPlaced = true;
         }
       }
