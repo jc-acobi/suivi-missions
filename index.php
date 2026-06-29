@@ -1926,7 +1926,7 @@ function excelDateToISO(val) {
 // ══════════════════════════════════════════
 //  CLIENTS
 // ══════════════════════════════════════════
-function isUrl(s) { return s.startsWith('http') || s.startsWith('data:'); }
+function isUrl(s) { return s.startsWith('http') || s.startsWith('data:') || s.startsWith('logos/'); }
 
 function logoHtml(logo, size = 40, clientNom = '') {
   if (!logo) return initialesHtml(clientNom, size);
@@ -1937,18 +1937,37 @@ function logoHtml(logo, size = 40, clientNom = '') {
 function loadLogoFile(input, logoFieldId, previewId) {
   const file = input.files[0];
   if (!file) return;
+
+  // Aperçu immédiat pendant l'upload
   const reader = new FileReader();
-  reader.onload = function(e) {
-    const dataUrl = e.target.result;
-    document.getElementById(logoFieldId).value = dataUrl;
+  reader.onload = e => {
     document.getElementById(previewId).innerHTML =
-      `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:contain;padding:4px">`;
-    // Afficher le label de confirmation (cl- ou edit-cl-)
-    const prefix = logoFieldId.startsWith('edit') ? 'edit-cl' : 'cl';
-    const lbl = document.getElementById(prefix + '-file-label');
-    if (lbl) lbl.style.display = 'inline';
+      `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:contain;padding:4px">`;
   };
   reader.readAsDataURL(file);
+
+  // Upload vers le serveur
+  const prefix = logoFieldId.startsWith('edit') ? 'edit-cl' : 'cl';
+  const lbl = document.getElementById(prefix + '-file-label');
+  if (lbl) { lbl.textContent = '⏳ Upload en cours…'; lbl.style.display = 'inline'; }
+
+  const fd = new FormData();
+  fd.append('logo', file);
+  fetch('upload-logo.php', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (data.url) {
+        document.getElementById(logoFieldId).value = data.url;
+        if (lbl) { lbl.textContent = '✓ Logo prêt'; lbl.style.display = 'inline'; }
+      } else {
+        toast('Erreur upload logo : ' + (data.error || 'inconnue'), 'error');
+        if (lbl) lbl.style.display = 'none';
+      }
+    })
+    .catch(() => {
+      toast('Erreur lors de l\'upload du logo', 'error');
+      if (lbl) lbl.style.display = 'none';
+    });
 }
 
 function initialesHtml(nom, size = 40) {
