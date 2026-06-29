@@ -1926,7 +1926,7 @@ function excelDateToISO(val) {
 // ══════════════════════════════════════════
 //  CLIENTS
 // ══════════════════════════════════════════
-function isUrl(s) { return s.startsWith('http') || s.startsWith('data:') || s.startsWith('logos/'); }
+function isUrl(s) { return s.startsWith('http') || s.startsWith('data:'); }
 
 function logoHtml(logo, size = 40, clientNom = '') {
   if (!logo) return initialesHtml(clientNom, size);
@@ -1937,37 +1937,32 @@ function logoHtml(logo, size = 40, clientNom = '') {
 function loadLogoFile(input, logoFieldId, previewId) {
   const file = input.files[0];
   if (!file) return;
-
-  // Aperçu immédiat pendant l'upload
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById(previewId).innerHTML =
-      `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:contain;padding:4px">`;
-  };
-  reader.readAsDataURL(file);
-
-  // Upload vers le serveur
   const prefix = logoFieldId.startsWith('edit') ? 'edit-cl' : 'cl';
   const lbl = document.getElementById(prefix + '-file-label');
-  if (lbl) { lbl.textContent = '⏳ Upload en cours…'; lbl.style.display = 'inline'; }
 
-  const fd = new FormData();
-  fd.append('logo', file);
-  fetch('upload-logo.php', { method: 'POST', body: fd })
-    .then(r => r.json())
-    .then(data => {
-      if (data.url) {
-        document.getElementById(logoFieldId).value = data.url;
-        if (lbl) { lbl.textContent = '✓ Logo prêt'; lbl.style.display = 'inline'; }
-      } else {
-        toast('Erreur upload logo : ' + (data.error || 'inconnue'), 'error');
-        if (lbl) lbl.style.display = 'none';
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      // Redimensionnement max 200×200 + compression JPEG
+      const MAX = 200;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else       { w = Math.round(w * MAX / h); h = MAX; }
       }
-    })
-    .catch(() => {
-      toast('Erreur lors de l\'upload du logo', 'error');
-      if (lbl) lbl.style.display = 'none';
-    });
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+      document.getElementById(logoFieldId).value = dataUrl;
+      document.getElementById(previewId).innerHTML =
+        `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:contain;padding:4px">`;
+      if (lbl) { lbl.textContent = '✓ Logo prêt'; lbl.style.display = 'inline'; }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 
 function initialesHtml(nom, size = 40) {
