@@ -1942,9 +1942,20 @@ function loadLogoFile(input, logoFieldId, previewId) {
 
   const reader = new FileReader();
   reader.onload = function(e) {
+    const dataUrlBrut = e.target.result;
+
+    // SVG : stocker tel quel (déjà léger, transparence conservée)
+    if (file.type === 'image/svg+xml') {
+      document.getElementById(logoFieldId).value = dataUrlBrut;
+      document.getElementById(previewId).innerHTML =
+        `<img src="${dataUrlBrut}" style="width:100%;height:100%;object-fit:contain;padding:4px">`;
+      if (lbl) { lbl.textContent = '✓ Logo prêt'; lbl.style.display = 'inline'; }
+      return;
+    }
+
+    // Autres formats : redimensionnement max 200×200, fond blanc, JPEG
     const img = new Image();
     img.onload = function() {
-      // Redimensionnement max 200×200 + compression JPEG
       const MAX = 200;
       let w = img.width, h = img.height;
       if (w > MAX || h > MAX) {
@@ -1953,14 +1964,17 @@ function loadLogoFile(input, logoFieldId, previewId) {
       }
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
       const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
       document.getElementById(logoFieldId).value = dataUrl;
       document.getElementById(previewId).innerHTML =
         `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:contain;padding:4px">`;
       if (lbl) { lbl.textContent = '✓ Logo prêt'; lbl.style.display = 'inline'; }
     };
-    img.src = e.target.result;
+    img.src = dataUrlBrut;
   };
   reader.readAsDataURL(file);
 }
