@@ -823,6 +823,7 @@
 <nav class="tabs">
   <button class="tab-btn active" onclick="showTab('visu')">🗂 Visualisation</button>
   <button class="tab-btn" onclick="showTab('collab-view')">👤 Vue Collab</button>
+  <button class="tab-btn" onclick="showTab('client-view')">🏢 Vue Client</button>
   <button class="tab-btn" onclick="showTab('analyse')">📊 Analyse</button>
   <button class="tab-btn" onclick="showTab('param')">⚙️ Paramétrage</button>
 </nav>
@@ -921,6 +922,48 @@
   </div>
 
   <div class="grid" id="cv-missions-grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
+    <!-- rempli par JS -->
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════
+     ONGLET VUE CLIENT
+════════════════════════════════════════ -->
+<div id="tab-client-view" class="tab-content">
+
+  <div class="filters" style="align-items:flex-start">
+    <div class="filter-group">
+      <label>Client</label>
+      <div style="position:relative;min-width:320px">
+        <input type="text" id="clv-client-search" placeholder="Rechercher un client…" autocomplete="off"
+          oninput="filterCLVClientDD();toggleClearBtn('clv-client')" onfocus="showCLVClientDD()" onblur="hideCLVClientDD()"
+          style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:0.5rem 2rem 0.5rem 0.9rem;font-family:'Nunito',sans-serif;font-size:0.9rem;width:100%">
+        <button class="search-clear-btn" id="clv-client-clear" onclick="clearSearchFilter('clv-client','renderClientView')" title="Vider le filtre">✕</button>
+        <input type="hidden" id="clv-client-id">
+        <div id="clv-client-dd" class="collab-dropdown"></div>
+      </div>
+    </div>
+    <div class="filter-group">
+      <label>Statut</label>
+      <div class="radio-group">
+        <label class="radio-option">
+          <input type="radio" name="clv-statut" value="en_cours" checked onchange="renderClientView()">
+          <span>En cours</span>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="clv-statut" value="terminee" onchange="renderClientView()">
+          <span>Terminées</span>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="clv-statut" value="" onchange="renderClientView()">
+          <span>Toutes</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid" id="clv-missions-grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr))">
     <!-- rempli par JS -->
   </div>
 
@@ -1589,6 +1632,7 @@ function showTab(name) {
   event.target.classList.add('active');
   if (name === 'visu') renderAll();
   if (name === 'collab-view') { refreshSelects(); renderCollabView(); }
+  if (name === 'client-view') { renderClientView(); }
   if (name === 'analyse') { refreshAnalyseSelect(); if (analyseView === 'methode') refreshAnalyseMethodesPicker(); renderAnalyse(); }
 }
 
@@ -3438,6 +3482,106 @@ function selectCVCollab(id, label) {
   document.getElementById('cv-collab-dd').style.display = 'none';
   toggleClearBtn('cv-collab');
   renderCollabView();
+}
+
+// ══════════════════════════════════════════
+//  VUE CLIENT
+// ══════════════════════════════════════════
+function filterCLVClientDD() {
+  const search = (document.getElementById('clv-client-search').value || '').toLowerCase();
+  const dd = document.getElementById('clv-client-dd');
+  const matches = DB.clients
+    .filter(c => !search || c.nom.toLowerCase().includes(search))
+    .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+  dd.innerHTML = matches.length
+    ? matches.map(c => `<div class="collab-dd-item" onmousedown="selectCLVClient('${c.id}','${c.nom.replace(/'/g,"\\'")}')">${c.nom}</div>`).join('')
+    : '<div style="padding:0.5rem 0.9rem;color:var(--text-muted);font-size:0.85rem">Aucun résultat</div>';
+  dd.style.display = 'block';
+}
+function showCLVClientDD() { filterCLVClientDD(); }
+function hideCLVClientDD() {
+  setTimeout(() => { const dd = document.getElementById('clv-client-dd'); if (dd) dd.style.display = 'none'; }, 200);
+}
+function selectCLVClient(id, label) {
+  document.getElementById('clv-client-id').value = id;
+  document.getElementById('clv-client-search').value = label;
+  document.getElementById('clv-client-dd').style.display = 'none';
+  toggleClearBtn('clv-client');
+  renderClientView();
+}
+
+function renderClientView() {
+  const clientId = document.getElementById('clv-client-id').value;
+  const statutEl = document.querySelector('input[name="clv-statut"]:checked');
+  const fStatut  = statutEl ? statutEl.value : 'en_cours';
+  const grid     = document.getElementById('clv-missions-grid');
+
+  let missions = DB.missions.filter(m => {
+    if (clientId && m.clientId !== clientId) return false;
+    if (fStatut && getStatut(m) !== fStatut) return false;
+    return true;
+  });
+
+  // Tri : date début décroissante
+  missions = missions.sort((a, b) => {
+    const da = a.debut || '', db = b.debut || '';
+    if (db > da) return 1;
+    if (db < da) return -1;
+    return 0;
+  });
+
+  if (!missions.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="icon">🔍</div>
+      <p>${clientId ? 'Aucune mission trouvée pour ce client.' : 'Sélectionnez un client ou choisissez un filtre de statut.'}</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = missions.map(m => {
+    const client  = DB.clients.find(c => c.id === m.clientId);
+    const collabs = (m.collabIds || []).map(id => {
+      const c = DB.collaborateurs.find(x => x.id === id);
+      return c ? `${c.prenom} ${c.nom}` : '';
+    }).filter(Boolean).join(', ');
+    const statut   = getStatut(m);
+    const badgeCls = statut === 'en_cours' ? 'badge-encours' : 'badge-terminee';
+    const badgeLbl = statut === 'en_cours' ? 'En cours' : 'Terminée';
+    const periode  = [m.debut, m.fin].filter(Boolean).map(d => formatDate(d)).join(' → ');
+
+    let logoContent;
+    if (client && client.logo && isUrl(client.logo)) {
+      const initFallback = (client.nom||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      logoContent = `<img src="${client.logo}" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=\\'font-weight:700;color:var(--accent);font-size:1rem\\'>${initFallback}</span>'">`;
+    } else if (client) {
+      const initiales = (client.nom||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      logoContent = `<span style="font-weight:700;color:var(--accent);font-size:1rem">${initiales}</span>`;
+    } else {
+      logoContent = `<span style="color:var(--text-muted)">?</span>`;
+    }
+
+    return `
+    <div class="mission-card" onclick="openEditMission('${m.id}')" style="cursor:pointer" title="Cliquer pour modifier">
+      <div class="mission-card-header">
+        <div class="mission-card-logo">${logoContent}</div>
+        <div>
+          <div class="mission-card-title">${m.titre || '—'}</div>
+          ${client ? `<div class="mission-card-client">${client.nom}</div>` : ''}
+        </div>
+      </div>
+      <span class="badge ${badgeCls}" style="align-self:flex-start">${badgeLbl}</span>
+      ${collabs ? `<div class="mission-card-field">👤 <strong>${collabs}</strong></div>` : ''}
+      ${periode  ? `<div class="mission-card-field">📅 <strong>${periode}</strong></div>` : ''}
+      ${(()=>{
+        const tags = [
+          ...(m.perimetreIds||[]).map(id => { const p = DB.perimetres.find(x=>x.id===id); return p ? `<span class="tag-pick selected" style="pointer-events:none">${p.nom}</span>` : ''; }),
+          ...(m.methodeIds||[]).map(id => { const p = DB.methodes.find(x=>x.id===id); return p ? `<span class="tag-pick selected" style="pointer-events:none;background:rgba(74,200,255,0.15);border-color:var(--accent2);color:var(--accent2)">${p.nom}</span>` : ''; })
+        ].filter(Boolean);
+        return tags.length ? `<div class="tag-picker" style="margin-top:0.2rem">${tags.join('')}</div>` : '';
+      })()}
+      ${m.details ? `<div class="mission-card-details">${m.details}</div>` : ''}
+    </div>`;
+  }).join('');
 }
 
 function renderCollabView() {
