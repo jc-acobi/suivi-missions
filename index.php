@@ -3788,12 +3788,6 @@ async function exportPPT() {
         });
       }
 
-      // Nom client
-      slide.addText(client ? client.nom : 'Sans client', {
-        x: x + 0.05, y: logoY + logoSize + 0.05, w: cardW - 0.1, h: 0.22,
-        fontSize: 8, bold: true, color: '1a1a2e', align: 'center', fontFace: 'Calibri'
-      });
-
       // Collabs
       const collabMap = {};
       clientMissions.forEach(m => {
@@ -3825,7 +3819,7 @@ async function exportPPT() {
 
       if (collabLines.length) {
         slide.addText(collabLines, {
-          x: x + 0.08, y: logoY + logoSize + 0.3, w: cardW - 0.16, h: cardH - logoSize - 0.45,
+          x: x + 0.08, y: logoY + logoSize + 0.08, w: cardW - 0.16, h: cardH - logoSize - 0.23,
           fontSize: 6.5, fontFace: 'Calibri', valign: 'top'
         });
       }
