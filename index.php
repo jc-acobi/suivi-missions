@@ -3753,7 +3753,7 @@ async function exportPPT() {
       slide.addShape(pptx.ShapeType.rect, {
         x, y, w: cardW, h: cardH,
         fill: { color: 'f0f4f8' },
-        line: { color: 'cccccc', width: 0.5 }
+        line: { pt: 0.5, color: 'cccccc' }
       });
 
       // Logo ou initiales
@@ -3764,8 +3764,7 @@ async function exportPPT() {
       if (client && client.logo) {
         const dataUrl = await toDataUrl(client.logo);
         if (dataUrl) {
-          slide.addImage({ data: dataUrl, x: logoX, y: logoY, w: logoSize, h: logoSize,
-            sizing: { type: 'contain', w: logoSize, h: logoSize } });
+          slide.addImage({ data: dataUrl, x: logoX, y: logoY, w: logoSize, h: logoSize });
           logoPlaced = true;
         }
       }
@@ -3773,7 +3772,7 @@ async function exportPPT() {
         const initiales = (client ? client.nom : '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
         slide.addShape(pptx.ShapeType.rect, {
           x: logoX, y: logoY, w: logoSize, h: logoSize,
-          fill: { color: '4a90d9' }, line: { color: '4a90d9', width: 0 }
+          fill: { color: '4a90d9' }, line: { pt: 0, color: '4a90d9' }
         });
         slide.addText(initiales, {
           x: logoX, y: logoY, w: logoSize, h: logoSize,
@@ -3832,7 +3831,7 @@ async function exportPPT() {
 
   } catch(err) {
     console.error('Export PPT error:', err);
-    alert('Erreur lors de l\'export : ' + err.message);
+    alert('Erreur lors de l\'export : ' + (err && (err.message || err.toString()) || JSON.stringify(err)));
   }
 }
 
